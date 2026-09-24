@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រព័ន្ធរៀបចំផែនការលក់ - Sales & Field Planner</title>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Google Fonts Khmer -->
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Bayon&family=Moul&family=Preahvihear&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1e3d59;
+            --accent: #ff6e40;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --red: #dc2626;
+            --green: #16a34a;
+            --blue: #0284c7;
+        }
+
+        body {
+            font-family: 'Battambang', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+        }
+
+        /* LED RGB Running Border Effect */
+        @keyframes rgbNeon {
+            0% { border-color: #ff0000; box-shadow: 0 0 10px #ff0000; }
+            33% { border-color: #00ff00; box-shadow: 0 0 10px #00ff00; }
+            66% { border-color: #00ffff; box-shadow: 0 0 10px #00ffff; }
+            100% { border-color: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+        }
+
+        .top-banner {
+            background-color: var(--primary);
+            color: #ffffff;
+            padding: 10px;
+            text-align: center;
+            font-family: 'Bayon', sans-serif;
+            font-size: 15px;
+            animation: rgbNeon 4s infinite linear;
+            border-bottom: 3px solid #ff6e40;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3d59, #152638);
+            color: white;
+            padding: 18px 16px;
+            text-align: center;
+            border-bottom: 2px solid #cbd5e1;
+        }
+        .header h1 {
+            font-size: 18px;
+            font-family: 'Bayon', sans-serif;
+            margin: 0 0 4px 0;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            font-size: 11px;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid #cbd5e1;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Battambang', sans-serif;
+            background: #f1f5f9;
+            border: none;
+            cursor: pointer;
+            color: var(--text);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .container {
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 70px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+
+        h3 {
+            font-size: 14px;
+            color: var(--primary);
+            font-family: 'Bayon', sans-serif;
+            margin: 0 0 10px 0;
+            border-left: 4px solid var(--accent);
+            padding-left: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: #475569;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Battambang', Arial, sans-serif;
+            box-sizing: border-box;
+        }
+        textarea { height: 50px; }
+
+        .btn {
+            background-color: var(--green);
+            color: white;
+            border: none;
+            padding: 9px 12px;
+            width: 100%;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Bayon', Arial, sans-serif;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-blue { background-color: var(--blue); }
+        .btn-accent { background-color: var(--accent); }
+
+        .item-row {
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 11px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .badge-interested { background: #dcfce7; color: #166534; }
+        .badge-not { background: #fee2e2; color: #991b1b; }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .action-btns button {
+            padding: 4px 8px;
+            font-size: 10px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Battambang', sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-banner">
+        🚀 កម្មវិធីរៀបចំផែនការលក់ និងចុះបេសកកម្មផ្ទាល់ខ្លួន (Sales Planner)
+    </div>
+
+    <div class="header">
+        <h1>ប្រព័ន្ធគ្រប់គ្រងក្រុមលក់ និងអតិថិជន</h1>
+        <p>លក់ផ្ទាល់ (Field Visit) និងលក់តាមអនឡាញ (Online Sales)</p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('visitTab', this)">📍 ចុះជួប (Field Visit)</button>
+        <button class="tab-btn" onclick="switchTab('onlineTab', this)">💻 លក់អនឡាញ</button>
+        <button class="tab-btn" onclick="switchTab('appointTab', this)">📅 ការណាត់ជួប</button>
+        <button class="tab-btn" onclick="switchTab('reportTab', this)">📊 របាយការណ៍</button>
+    </div>
+
+    <div class="container">
+
+        <!-- TAB 1: FIELD VISIT & CUSTOMERS -->
+        <div id="visitTab" class="tab-content">
+            <div class="card">
+                <h3>➕ ចុះឈ្មោះអតិថិជន និង Pin Location</h3>
+                <div class="form-group">
+                    <button class="btn btn-blue" onclick="importTelegramContact()">📥 ទាញយកឈ្មោះពី Telegram Contacts</button>
+                </div>
+                <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="custName" placeholder="ឧ. លោក នាក់ សុខ"></div>
+                <div class="form-group"><label>អាសយដ្ឋាន</label><input type="text" id="custAddress" placeholder="ឧ. ផ្ទះលេខ ១២ ផ្លូវ ២០០១ ភ្នំពេញ"></div>
+                <div class="form-group"><label>លេខទូរស័ព្ទ</label><input type="text" id="custPhone" placeholder="ឧ. 012345678"></div>
+                <div class="form-group">
+                    <label>📍 ទីតាំង GPS (Google Maps Link ឬ Lat,Long)</label>
+                    <div style="display: flex; gap: 6px;">
+                        <input type="text" id="custLocation" placeholder="ចុចប៊ូតុងដើម្បីចាប់យកទីតាំង">
+                        <button class="btn btn-accent" style="width: 120px;" onclick="getGPSLocation()">📍 ចាប់ GPS</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ចំណាប់អារម្មណ៍អតិថិជន</label>
+                    <select id="custStatus">
+                        <option value="interested">🔥 ចាប់អារម្មណ៍ខ្លាំង (Interested)</option>
+                        <option value="not_interested">❌ មិនទាន់ចាប់អារម្មណ៍ (Not Interested)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>កំណត់ត្រា / មតិយោបល់</label><textarea id="custNote" placeholder="ឧ. ចង់បានទំនិញគំរូសាកល្បង..."></textarea></div>
+                <button class="btn" onclick="saveCustomer()">រក្សាទុកអតិថិជន</button>
+            </div>
+
+            <div class="card">
+                <h3>📋 បញ្ជីអតិថិជនសរុប</h3>
+                <div id="customerListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ONLINE SALES -->
+        <div id="onlineTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>💻 ផុសរូបភាព និងតម្លៃលក់អនឡាញ</h3>
+                <div class="form-group"><label>ឈ្មោះទំនិញ</label><input type="text" id="onlineItemName" placeholder="ឧ. សំបកកង់ម៉ូតូកម្រិតខ្ពស់"></div>
+                <div class="form-group"><label>តម្លៃ ($)</label><input type="text" id="onlineItemPrice" placeholder="ឧ. 25$"></div>
+                <div class="form-group"><label>តំណភ្ជាប់រូបភាព (Image URL)</label><input type="text" id="onlineItemImg" placeholder="https://..."></div>
+                <button class="btn btn-blue" onclick="postOnlineItem()">ផុសបង្ហាញអតិថិជន</button>
+            </div>
+            <div class="card">
+                <h3>📦 បញ្ជីទំនិញអនឡាញ</h3>
+                <div id="onlineItemListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: APPOINTMENTS -->
+        <div id="appointTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>📅 កំណត់ការណាត់ជួបអតិថិជន</h3>
+                <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="appCustName" placeholder="ឈ្មោះអតិថិជន"></div>
+                <div class="form-group">
+                    <label>ប្រភេទការណាត់</label>
+                    <select id="appType">
+                        <option value="ណាត់ចរចា">🤝 ណាត់ចរចា (Negotiation)</option>
+                        <option value="ណាត់មើលទំនិញ">📦 ណាត់មើលទំនិញ (Product Demo)</option>
+                        <option value="ណាត់ទូរទាត់ប្រាក់">💰 ណាត់ទូរទាត់ប្រាក់ (Payment Collection)</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>កាលបរិច្ឆេទ និងម៉ោង</label><input type="datetime-local" id="appDateTime"></div>
+                <button class="btn btn-accent" onclick="saveAppointment()">រក្សាទុកការណាត់ជួប</button>
+            </div>
+            <div class="card">
+                <h3>⏰ បញ្ជីការណាត់ជួបសរុប</h3>
+                <div id="appointmentListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: REPORTS & TELEGRAM SHARING -->
+        <div id="reportTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>📊 របាយការណ៍ប្រចាំថ្ងៃ និងប្រចាំខែ</h3>
+                <div id="reportSummaryBox" style="font-size: 12px; line-height: 1.6; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
+                    កំពុងគណនារបាយការណ៍...
+                </div>
+                <button class="btn btn-blue" onclick="shareReportToTelegram()">📤 ចែករំលែករបាយការណ៍ទៅ Telegram</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let customers = JSON.parse(localStorage.getItem('sales_customers')) || [];
+        let onlineItems = JSON.parse(localStorage.getItem('sales_online')) || [];
+        let appointments = JSON.parse(localStorage.getItem('sales_appoint')) || [];
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            btn.classList.add('active');
+            if(tabId === 'reportTab') generateReport();
+        }
+
+        // 1. Field Visit Functions
+        function getGPSLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    let lat = position.coords.latitude;
+                    let lon = position.coords.longitude;
+                    let mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+                    document.getElementById('custLocation').value = mapLink;
+                    alert("ចាប់យកទីតាំង GPS បានสำเร็จ!");
+                }, () => {
+                    alert("មិនអាចទាញយកទីតាំង GPS បានទេ សូមពិនិត្យការអនុញ្ញាតទីតាំងរបស់អ្នក។");
+                });
+            } else {
+                alert("Browser របស់អ្នកមិនគាំទ្រ GPS ទេ។");
+            }
+        }
+
+        function importTelegramContact() {
+            // Mock simulation for Telegram Contact picker or manual input
+            let sampleName = "សុខ សាន្ត (ពី Telegram)";
+            let samplePhone = "011223344";
+            document.getElementById('custName').value = sampleName;
+            document.getElementById('custPhone').value = samplePhone;
+            alert("បានទាញយកទំនាក់ទំនងពី Telegram ជោគជ័យ!");
+        }
+
+        function saveCustomer() {
+            let name = document.getElementById('custName').value;
+            let address = document.getElementById('custAddress').value;
+            let phone = document.getElementById('custPhone').value;
+            let location = document.getElementById('custLocation').value;
+            let status = document.getElementById('custStatus').value;
+            let note = document.getElementById('custNote').value;
+
+            if(!name) {
+                alert("សូមបំពេញឈ្មោះអតិថិជន!");
+                return;
+            }
+
+            customers.push({ name, address, phone, location, status, note, date: new Date().toLocaleDateString() });
+            localStorage.setItem('sales_customers', JSON.stringify(customers));
+            alert("រក្សាទុកអតិថិជនជោគជ័យ!");
+            document.getElementById('custName').value = "";
+            document.getElementById('custAddress').value = "";
+            document.getElementById('custPhone').value = "";
+            document.getElementById('custLocation').value = "";
+            document.getElementById('custNote').value = "";
+            loadCustomers();
+        }
+
+        function loadCustomers() {
+            let container = document.getElementById('customerListContainer');
+            container.innerHTML = "";
+            if(customers.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#888; font-size:11px;'>គ្មានទិន្នន័យអតិថិជនទេ</p>";
+                return;
+            }
+            customers.forEach((c, idx) => {
+                let badge = c.status === 'interested' ? '<span class="badge badge-interested">ចាប់អារម្មណ៍</span>' : '<span class="badge badge-not">មិនទាន់ចាប់អារម្មណ៍</span>';
+                let mapBtn = c.location ? `<a href="${c.location}" target="_blank" class="btn-blue" style="padding:3px 8px; border-radius:4px; color:white; text-decoration:none; display:inline-block; font-size:10px;">🗺️ បើក Google Maps</a>` : '';
+                container.innerHTML += `
+                    <div class="item-row">
+                        <b>${c.name}</b> ${badge}<br>
+                        📍 អាសយដ្ឋាន: ${c.address || 'មិនមាន'}<br>
+                        📞 លេខទូរស័ព្ទ: ${c.phone || 'មិនមាន'}<br>
+                        📝 កំណត់ត្រា: ${c.note || 'គ្មាន'}<br>
+                        <div class="action-btns">
+                            ${mapBtn}
+                            <button style="background:red; color:white;" onclick="deleteCustomer(${idx})">លុប</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteCustomer(idx) {
+            if(confirm("តើចង់លុបអតិថិជននេះមែនទេ?")) {
+                customers.splice(idx, 1);
+                localStorage.setItem('sales_customers', JSON.stringify(customers));
+                loadCustomers();
+            }
+        }
+
+        // 2. Online Sales Functions
+        function postOnlineItem() {
+            let name = document.getElementById('onlineItemName').value;
+            let price = document.getElementById('onlineItemPrice').value;
+            let img = document.getElementById('onlineItemImg').value || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400';
+
+            if(!name || !price) {
+                alert("សូមបំពេញឈ្មោះ និងតម្លៃទំនិញ!");
+                return;
+            }
+
+            onlineItems.push({ name, price, img });
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+            alert("ផុសទំនិញអនឡាញជោគជ័យ!");
+            document.getElementById('onlineItemName').value = "";
+            document.getElementById('onlineItemPrice').value = "";
+            document.getElementById('onlineItemImg').value = "";
+            loadOnlineItems();
+        }
+
+        function loadOnlineItems() {
+            let container = document.getElementById('onlineItemListContainer');
+            container.innerHTML = "";
+            if(onlineItems.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#888; font-size:11px;'>មិនទាន់មានទំនិញអនឡាញទេ</p>";
+                return;
+            }
+            onlineItems.forEach((item, idx) => {
+                let shareText = `🛒 ផលិតផលលក់អនឡាញ:\n📦 ${item.name}\n💰 តម្លៃ: ${item.price}`;
+                let shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/SameanMom168')}&text=` + encodeURIComponent(shareText);
+                container.innerHTML += `
+                    <div class="item-row" style="display:flex; align-items:center; gap:8px;">
+                        <img src="${item.img}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+                        <div style="flex-grow:1;">
+                            <b>${item.name}</b><br><span style="color:red;">តម្លៃ: ${item.price}</span>
+                        </div>
+                        <a href="${shareUrl}" target="_blank" class="btn-blue" style="padding:4px 8px; font-size:10px; color:white; border-radius:4px; text-decoration:none;">📤 ឆែរ</a>
+                        <button style="background:red; color:white; border:none; padding:4px 6px; border-radius:4px; cursor:pointer;" onclick="deleteOnlineItem(${idx})">លុប</button>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteOnlineItem(idx) {
+            onlineItems.splice(idx, 1);
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+            loadOnlineItems();
+        }
+
+        // 3. Appointments Functions
+        function saveAppointment() {
+            let name = document.getElementById('appCustName').value;
+            let type = document.getElementById('appType').value;
+            let datetime = document.getElementById('appDateTime').value;
+
+            if(!name || !datetime) {
+                alert("សូមបំពេញឈ្មោះអតិថិជន និងកាលបរិច្ឆេទណាត់ជួប!");
+                return;
+            }
+
+            appointments.push({ name, type, datetime });
+            localStorage.setItem('sales_appoint', JSON.stringify(appointments));
+            alert("រក្សាទុកការណាត់ជួបជោគជ័យ!");
+            document.getElementById('appCustName').value = "";
+            loadAppointments();
+        }
+
+        function loadAppointments() {
+            let container = document.getElementById('appointmentListContainer');
+            container.innerHTML = "";
+            if(appointments.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#888; font-size:11px;'>មិនទាន់មានការណាត់ជួបទេ</p>";
+                return;
+            }
+            appointments.forEach((app, idx) => {
+                container.innerHTML += `
+                    <div class="item-row">
+                        <b>📌 ${app.type}</b><br>
+                        👤 អតិថិជន: ${app.name}<br>
+                        ⏰ ពេលវាលា: ${app.datetime}<br>
+                        <button style="background:red; color:white; margin-top:4px;" onclick="deleteAppointment(${idx})">លុបការណាត់</button>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteAppointment(idx) {
+            appointments.splice(idx, 1);
+            localStorage.setItem('sales_appoint', JSON.stringify(appointments));
+            loadAppointments();
+        }
+
+        // 4. Reports & Sharing
+        function generateReport() {
+            let totalCust = customers.length;
+            let interestedCust = customers.filter(c => c.status === 'interested').length;
+            let totalOnline = onlineItems.length;
+            let totalAppoint = appointments.length;
+
+            let reportHtml = `
+                <b>📊 របាយការណ៍សង្ខេបការងារលក់:</b><br>
+                - អតិថិជនចុះជួបសរុប: ${totalCust} នាក់<br>
+                - អតិថិជនចាប់អារម្មណ៍: ${interestedCust} នាក់<br>
+                - ផលិតផលផុសអនឡាញ: ${totalOnline} មុខ<br>
+                - ការណាត់ជួបរอดู/ទូរទាត់: ${totalAppoint} នាក់<br>
+                📅 កាលបរិច្ឆេទចេញរបាយការណ៍: ${new Date().toLocaleDateString()}
+            `;
+            document.getElementById('reportSummaryBox').innerHTML = reportHtml;
+        }
+
+        function shareReportToTelegram() {
+            let totalCust = customers.length;
+            let interestedCust = customers.filter(c => c.status === 'interested').length;
+            let text = `📊 របាយការណ៍ប្រចាំថ្ងៃរបស់ក្រុមលក់:\n- អតិថិជនជួបផ្ទាល់: ${totalCust} នាក់\n- ចាប់អារម្មណ៍: ${interestedCust} នាក់\n- ការណាត់ជួប: ${appointments.length} នាក់\n📅 ថ្ងៃទី: ${new Date().toLocaleDateString()}`;
+            let tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/SameanMom168')}&text=` + encodeURIComponent(text);
+            window.open(tgShareUrl, '_blank');
+        }
+
+        // Initial Load
+        loadCustomers();
+        loadOnlineItems();
+        loadAppointments();
+    </script>
+</body>
+</html>
