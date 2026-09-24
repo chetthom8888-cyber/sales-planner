@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ប្រព័ន្ធរៀបចំផែនការលក់ - Sales Planner</title>
+    
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <!-- Google Fonts Khmer Battambang -->
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --red: #ef4444;
+            --green: #10b981;
+            --border: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Battambang', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+            font-size: 13px; /* បង្កើនទំហំអក្សរទូទៅឱ្យធំល្មមស្រួលមើល */
+        }
+
+        .top-banner {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #ffffff;
+            padding: 14px 16px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            background: #ffffff;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: #f8fafc;
+        }
+
+        .container {
+            padding: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 70px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 14px;
+            color: var(--primary);
+            margin: 0;
+            font-weight: 700;
+            border-left: 3px solid var(--accent);
+            padding-left: 8px;
+        }
+
+        .btn-plus {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #475569;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Battambang', Arial, sans-serif;
+            box-sizing: border-box;
+            background: #ffffff;
+            color: #0f172a;
+            outline: none;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+        }
+        textarea { height: 50px; }
+
+        .btn {
+            background-color: var(--green);
+            color: white;
+            border: none;
+            padding: 10px 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-blue { background-color: var(--accent); }
+
+        .item-row-compact {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .badge-interested { background: #d1fae5; color: #065f46; }
+        .badge-not { background: #fee2e2; color: #991b1b; }
+        .badge-online { background: #e0f2fe; color: #0369a1; }
+
+        .action-btns-mini {
+            display: flex;
+            gap: 4px;
+        }
+        .action-btns-mini button, .action-btns-mini a {
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            font-family: 'Battambang', sans-serif;
+        }
+
+        /* Detail Modal / Expand Box */
+        .detail-box {
+            background: #ffffff;
+            border: 1px solid var(--accent);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 6px;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-banner">
+        📋 ប្រព័ន្ធគ្រប់គ្រង និងរៀបចំផែនការលក់
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('visitTab', this)">📍 ជួបផ្ទាល់</button>
+        <button class="tab-btn" onclick="switchTab('onlineTab', this)">💻 អនឡាញ</button>
+        <button class="tab-btn" onclick="switchTab('contactTab', this)">📇 ទំនាក់ទំនង</button>
+        <button class="tab-btn" onclick="switchTab('appointTab', this)">📅 ណាត់ជួប</button>
+        <button class="tab-btn" onclick="switchTab('reportTab', this)">📊 របាយការណ៍</button>
+    </div>
+
+    <div class="container">
+
+        <!-- TAB 1: FIELD VISIT & CUSTOMERS -->
+        <div id="visitTab" class="tab-content">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>➕ បញ្ចូលអតិថិជនជួបផ្ទាល់</h3>
+                    <button class="btn-plus" onclick="toggleForm('visitForm')">+</button>
+                </div>
+                <div id="visitForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group">
+                        <button class="btn btn-blue" onclick="importTelegramContact()">📥 ទាញយកពី Telegram</button>
+                    </div>
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="custName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ / សង្កាត់ / ខណ្ឌ)</label><input type="text" id="custAddress" placeholder="ឧ. ផ្លូវ ២០០១, សង្កាត់កាកបារ, ខណ្ឌពោធិ៍សែនជ័យ"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ</label><input type="text" id="custPhone" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 ទីតាំង GPS</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="custLocation" placeholder="Google Maps Link">
+                            <button class="btn btn-blue" style="width: 90px;" onclick="getGPSLocation()">ចាប់ GPS</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ចំណាប់អារម្មណ៍</label>
+                        <select id="custStatus">
+                            <option value="interested">ចាប់អារម្មណ៍</option>
+                            <option value="not_interested">មិនទាន់ចាប់អារម្មណ៍</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>កំណត់ត្រា</label><textarea id="custNote" placeholder="កំណត់ត្រា..."></textarea></div>
+                    <button class="btn" onclick="saveCustomer()">រក្សាទុក</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📋 បញ្ជីអតិថិជនជួបផ្ទាល់</h3>
+                <div id="customerListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: ONLINE SALES -->
+        <div id="onlineTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>💻 បញ្ចូលអនឡាញ (តម្លៃចរចា)</h3>
+                    <button class="btn-plus" onclick="toggleForm('onlineForm')">+</button>
+                </div>
+                <div id="onlineForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះទំនិញ</label><input type="text" id="onlineItemName" placeholder="ឈ្មោះទំនិញ"></div>
+                    <div class="form-group"><label>រូបភាព URL</label><input type="text" id="onlineItemImg" placeholder="https://..."></div>
+                    <div class="form-group">
+                        <label>ស្ថានភាពអតិថិជន</label>
+                        <select id="onlineCustStatus">
+                            <option value="responded">ឆ្លើយតប</option>
+                            <option value="seen_no_reply">មើលមិនតប</option>
+                            <option value="not_seen">មិនមើល</option>
+                            <option value="interested">ចំណាប់អារម្មណ៍</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ឈ្មោះអតិថិជនអនឡាញ</label><input type="text" id="onlineCustName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ / សង្កាត់ / ខណ្ឌ)</label><input type="text" id="onlineCustAddress" placeholder="ទីតាំងអតិថិជន"></div>
+                    <button class="btn btn-blue" onclick="postOnlineItem()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📦 បញ្ជីអនឡាញ</h3>
+                <div id="onlineItemListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CONTACT DIRECTORY -->
+        <div id="contactTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📇 បញ្ជីទំនាក់ទំនងសរុប</h3>
+                    <button class="btn-plus" onclick="toggleForm('contactForm')">+</button>
+                </div>
+                <div id="contactForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះទំនាក់ទំនង</label><input type="text" id="manualContactName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ / សង្កាត់ / ខណ្ឌ)</label><input type="text" id="manualContactAddress" placeholder="ឧ. សង្កាត់ទួលសង្កែ, ខណ្ឌឬស្សីកែវ"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ / ព័ត៌មាន</label><input type="text" id="manualContactInfo" placeholder="លេខទូរស័ព្ទ ឬ Telegram"></div>
+                    <button class="btn btn-blue" onclick="saveManualContact()">រក្សាទុកទំនាក់ទំនង</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📇 បញ្ជីឈ្មោះ និងទីតាំង (ចុចដើម្បីមើលលម្អិត)</h3>
+                <div id="allContactsContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: APPOINTMENTS -->
+        <div id="appointTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📅 កំណត់ការណាត់ជួប</h3>
+                    <button class="btn-plus" onclick="toggleForm('appointForm')">+</button>
+                </div>
+                <div id="appointForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="appCustName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group">
+                        <label>ប្រភេទការណាត់</label>
+                        <select id="appType">
+                            <option value="ណាត់ចរចា">ណាត់ចរចា</option>
+                            <option value="ណាត់មើលទំនិញ">ណាត់មើលទំនិញ</option>
+                            <option value="ណាត់ទូរទាត់ប្រាក់">ណាត់ទូរទាត់ប្រាក់</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>កាលបរិច្ឆេទ និងម៉ោង</label><input type="datetime-local" id="appDateTime"></div>
+                    <button class="btn btn-blue" onclick="saveAppointment()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>⏰ បញ្ជីការណាត់ជួប</h3>
+                <div id="appointmentListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: REPORTS & TELEGRAM SHARING -->
+        <div id="reportTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>📊 របាយការណ៍សង្ខេប</h3>
+                <div id="reportSummaryBox" style="font-size: 13px; line-height: 1.6; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--border); white-space: pre-line;">
+                    កំពុងគណនារបាយការណ៍...
+                </div>
+                <button class="btn btn-blue" onclick="shareReportToTelegram()">📤 ចែករំលែករបាយការណ៍ទៅ Telegram</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let customers = JSON.parse(localStorage.getItem('sales_customers')) || [];
+        let onlineItems = JSON.parse(localStorage.getItem('sales_online')) || [];
+        let manualContacts = JSON.parse(localStorage.getItem('sales_manual_contacts')) || [];
+        let appointments = JSON.parse(localStorage.getItem('sales_appoint')) || [];
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block';
+            btn.classList.add('active');
+            if(tabId === 'reportTab') generateReport();
+            if(tabId === 'contactTab') loadAllContacts();
+        }
+
+        function toggleForm(formId) {
+            let f = document.getElementById(formId);
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function getGPSLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    let lat = position.coords.latitude;
+                    let lon = position.coords.longitude;
+                    document.getElementById('custLocation').value = `https://maps.google.com/?q=${lat},${lon}`;
+                    alert("ចាប់យកទីតាំង GPS បានสำเร็จ!");
+                }, () => { alert("មិនអាចទាញយកទីតាំង GPS ទេ"); });
+            } else { alert("Browser មិនគាំទ្រ GPS"); }
+        }
+
+        function importTelegramContact() {
+            document.getElementById('custName').value = "សុខ សាន្ត (ពី Telegram)";
+            document.getElementById('custPhone').value = "011223344";
+            document.getElementById('custAddress').value = "សង្កាត់ទឹកថ្លា, ខណ្ឌសែនសុខ";
+            alert("ទាញយកជោគជ័យ!");
+        }
+
+        function saveCustomer() {
+            let name = document.getElementById('custName').value;
+            if(!name) { alert("សូមបំពេញឈ្មោះអតិថិជន!"); return; }
+            customers.push({
+                name,
+                address: document.getElementById('custAddress').value || 'មិនមានទីតាំង',
+                phone: document.getElementById('custPhone').value,
+                location: document.getElementById('custLocation').value,
+                status: document.getElementById('custStatus').value,
+                note: document.getElementById('custNote').value
+            });
+            localStorage.setItem('sales_customers', JSON.stringify(customers));
+            alert("រក្សាទុករួចរាល់!");
+            document.getElementById('custName').value = "";
+            document.getElementById('custAddress').value = "";
+            document.getElementById('custPhone').value = "";
+            document.getElementById('custLocation').value = "";
+            document.getElementById('custNote').value = "";
+            toggleForm('visitForm');
+            loadCustomers();
+        }
+
+        function loadCustomers() {
+            let container = document.getElementById('customerListContainer');
+            container.innerHTML = customers.length === 0 ? "<p style='text-align:center; color:#888; font-size:12px;'>គ្មានទិន្នន័យ</p>" : "";
+            customers.forEach((c, idx) => {
+                let badge = c.status === 'interested' ? '<span class="badge badge-interested">ចាប់អារម្មណ៍</span>' : '<span class="badge badge-not">មិនទាន់</span>';
+                let mapBtn = c.location ? `<a href="${c.location}" target="_blank" style="background:var(--accent);">Map</a>` : '';
+                container.innerHTML += `
+                    <div class="item-row-compact">
+                        <span><b>${idx + 1}.</b> ${c.name} (${c.address}) ${badge}</span>
+                        <div class="action-btns-mini">
+                            ${mapBtn}
+                            <button style="background:var(--red);" onclick="deleteCustomer(${idx})">លុប</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteCustomer(idx) {
+            if(confirm("លុបអតិថិជននេះ?")) {
+                customers.splice(idx, 1);
+                localStorage.setItem('sales_customers', JSON.stringify(customers));
+                loadCustomers();
+            }
+        }
+
+        function postOnlineItem() {
+            let name = document.getElementById('onlineItemName').value;
+            if(!name) { alert("សូមបំពេញឈ្មោះទំនិញ!"); return; }
+            onlineItems.push({
+                name,
+                img: document.getElementById('onlineItemImg').value || 'https://images.unsplash.com/photo-1558981403-c5f9899a28bc?w=400',
+                custStatus: document.getElementById('onlineCustStatus').value,
+                custName: document.getElementById('onlineCustName').value || 'អតិថិជនទូទៅ',
+                custAddress: document.getElementById('onlineCustAddress').value || 'មិនមានទីតាំង'
+            });
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+            alert("រក្សាទុករួចរាល់!");
+            document.getElementById('onlineItemName').value = "";
+            document.getElementById('onlineItemImg').value = "";
+            document.getElementById('onlineCustName').value = "";
+            document.getElementById('onlineCustAddress').value = "";
+            toggleForm('onlineForm');
+            loadOnlineItems();
+        }
+
+        function loadOnlineItems() {
+            let container = document.getElementById('onlineItemListContainer');
+            container.innerHTML = onlineItems.length === 0 ? "<p style='text-align:center; color:#888; font-size:12px;'>គ្មានទិន្នន័យ</p>" : "";
+            onlineItems.forEach((item, idx) => {
+                let statusText = item.custStatus === 'responded' ? 'ឆ្លើយតប' : item.custStatus === 'seen_no_reply' ? 'មើលមិនតប' : item.custStatus === 'not_seen' ? 'មិនមើល' : 'ចំណាប់អារម្មណ៍';
+                let shareText = `🛒 ផលិតផលអនឡាញ:\n📦 ${item.name}\n👤 ${item.custName}\n📌 ${statusText}`;
+                let shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/SameanMom168')}&text=` + encodeURIComponent(shareText);
+                
+                container.innerHTML += `
+                    <div class="item-row-compact">
+                        <span><b>${idx + 1}.</b> ${item.custName} (${item.custAddress}) <span class="badge badge-online">${statusText}</span></span>
+                        <div class="action-btns-mini">
+                            <a href="${shareUrl}" target="_blank" style="background:var(--accent);">ឆែរ</a>
+                            <button style="background:var(--red);" onclick="deleteOnlineItem(${idx})">លុប</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteOnlineItem(idx) {
+            onlineItems.splice(idx, 1);
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+            loadOnlineItems();
+        }
+
+        function saveManualContact() {
+            let name = document.getElementById('manualContactName').value;
+            if(!name) { alert("សូមបំពេញឈ្មោះទំនាក់ទំនង!"); return; }
+            manualContacts.push({
+                name,
+                address: document.getElementById('manualContactAddress').value || 'មិនមានទីតាំង',
+                info: document.getElementById('manualContactInfo').value || 'មិនមានព័ត៌មាន'
+            });
+            localStorage.setItem('sales_manual_contacts', JSON.stringify(manualContacts));
+            alert("រក្សាទុករួចរាល់!");
+            document.getElementById('manualContactName').value = "";
+            document.getElementById('manualContactAddress').value = "";
+            document.getElementById('manualContactInfo').value = "";
+            toggleForm('contactForm');
+            loadAllContacts();
+        }
+
+        function loadAllContacts() {
+            let container = document.getElementById('allContactsContainer');
+            container.innerHTML = "";
+            let all = [];
+            
+            customers.forEach(c => all.push({ name: c.name, location: c.address, type: 'ជួបផ្ទាល់', details: `ទូរស័ព្ទ: ${c.phone || 'គ្មាន'}, កំណត់ត្រា: ${c.note || 'គ្មាន'}` }));
+            onlineItems.forEach(o => all.push({ name: o.custName, location: o.custAddress, type: 'អនឡាញ', details: `ទំនិញ: ${o.name}, ស្ថានភាព: ${o.custStatus}` }));
+            manualContacts.push(...manualContacts); // prevent duplication logic if needed or keep manual separate
+            // Let's properly gather unique sources
+            let combined = [];
+            customers.forEach(c => combined.push({ name: c.name, location: c.address, type: 'ជួបផ្ទាល់', details: `ទូរស័ព្ទ: ${c.phone || 'គ្មាន'} | កំណត់ត្រា: ${c.note || 'គ្មាន'}` }));
+            onlineItems.forEach(o => combined.push({ name: o.custName, location: o.custAddress, type: 'អនឡាញ', details: `ទំនិញ: ${o.name} | ស្ថានភាព: ${o.custStatus}` }));
+            manualContacts.forEach(m => combined.push({ name: m.name, location: m.address, type: 'បន្ថែមផ្ទាល់', details: `ព័ត៌មាន: ${m.info}` }));
+
+            if(combined.length === 0) { container.innerHTML = "<p style='text-align:center; color:#888; font-size:12px;'>គ្មានទិន្នន័យទំនាក់ទំនងទេ</p>"; return; }
+            
+            combined.forEach((item, idx) => {
+                container.innerHTML += `
+                    <div style="margin-bottom: 8px;">
+                        <div class="item-row-compact" style="margin-bottom:0; cursor:pointer;" onclick="toggleContactDetail(${idx})">
+                            <span><b>${idx + 1}.</b> ${item.name} <span style="color:#64748b;">(${item.location})</span> <span class="badge badge-online">${item.type}</span></span>
+                            <span>▼</span>
+                        </div>
+                        <div id="contactDetail_${idx}" class="detail-box" style="display:none;">
+                            <b>👤 ឈ្មោះ:</b> ${item.name}<br>
+                            <b>📍 ទីតាំង:</b> ${item.location}<br>
+                            <b>📌 ប្រភព:</b> ${item.type}<br>
+                            <b>📝 ព័ត៌មានលម្អិត:</b> ${item.details}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function toggleContactDetail(idx) {
+            let box = document.getElementById(`contactDetail_${idx}`);
+            box.style.display = box.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function saveAppointment() {
+            let name = document.getElementById('appCustName').value;
+            let datetime = document.getElementById('appDateTime').value;
+            if(!name || !datetime) { alert("សូមបំពេញព័ត៌មាន!"); return; }
+            appointments.push({ name, type: document.getElementById('appType').value, datetime });
+            localStorage.setItem('sales_appoint', JSON.stringify(appointments));
+            alert("រក្សាទុករួចរាល់!");
+            document.getElementById('appCustName').value = "";
+            toggleForm('appointForm');
+            loadAppointments();
+        }
+
+        function loadAppointments() {
+            let container = document.getElementById('appointmentListContainer');
+            container.innerHTML = appointments.length === 0 ? "<p style='text-align:center; color:#888; font-size:12px;'>គ្មានទិន្នន័យ</p>" : "";
+            appointments.forEach((app, idx) => {
+                container.innerHTML += `
+                    <div class="item-row-compact">
+                        <span><b>${idx + 1}.</b> ${app.name} - ${app.type} (${app.datetime})</span>
+                        <div class="action-btns-mini">
+                            <button style="background:var(--red);" onclick="deleteAppointment(${idx})">លុប</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteAppointment(idx) {
+            appointments.splice(idx, 1);
+            localStorage.setItem('sales_appoint', JSON.stringify(appointments));
+            loadAppointments();
+        }
+
+        function generateReport() {
+            let currentDate = new Date().toLocaleDateString('km-KH', { year: 'numeric', month: 'long', day: 'numeric' });
+            let reportText = `📊 របាយការណ៍ប្រចាំថ្ងៃរបស់ក្រុមលក់
+📅 កាលបរិច្ឆេទ: ${currentDate}
+- អតិថិជនជួបផ្ទាល់: ${customers.length} នាក់
+- ចាប់អារម្មណ៍: ${customers.filter(c => c.status === 'interested').length} នាក់
+- ការណាត់ជួប: ${appointments.length} នាក់
+
+💻 អនឡាញ:
+- ឆ្លើយតប: ${onlineItems.filter(i => i.custStatus === 'responded').length}
+- មើលមិនតប: ${onlineItems.filter(i => i.custStatus === 'seen_no_reply').length}
+- មិនមើល: ${onlineItems.filter(i => i.custStatus === 'not_seen').length}
+- ចាប់អារម្មណ៍: ${onlineItems.filter(i => i.custStatus === 'interested').length}`;
+
+            document.getElementById('reportSummaryBox').textContent = reportText;
+        }
+
+        function shareReportToTelegram() {
+            let currentDate = new Date().toLocaleDateString();
+            let text = `📊 របាយការណ៍ប្រចាំថ្ងៃរបស់ក្រុមលក់
+📅 ថ្ងៃទី: ${currentDate}
+- អតិថិជនជួបផ្ទាល់: ${customers.length} នាក់
+- ចាប់អារម្មណ៍: ${customers.filter(c => c.status === 'interested').length} នាក់
+- ការណាត់ជួប: ${appointments.length} នាក់
+
+💻 អនឡាញ:
+- ឆ្លើយតប: ${onlineItems.filter(i => i.custStatus === 'responded').length}
+- មើលមិនតប: ${onlineItems.filter(i => i.custStatus === 'seen_no_reply').length}
+- មិនមើល: ${onlineItems.filter(i => i.custStatus === 'not_seen').length}
+- ចាប់អារម្មណ៍: ${onlineItems.filter(i => i.custStatus === 'interested').length}`;
+
+            let tgShareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me/SameanMom168')}&text=` + encodeURIComponent(text);
+            window.open(tgShareUrl, '_blank');
+        }
+
+        loadCustomers();
+        loadOnlineItems();
+        loadAppointments();
+    </script>
+</body>
+</html>
