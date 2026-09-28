@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Planner Pro</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --primary: #020617;
+            --accent: #2563eb;
+            --bg: #e0f2fe;
+            --card-bg: #ffffff;
+            --text: #020617;
+            --red: #dc2626;
+            --green: #16a34a;
+            --orange: #ea580c;
+            --border: #020617;
+        }
+
+        body {
+            font-family: 'Battambang', Arial, sans-serif;
+            background-color: var(--bg);
+            margin: 0; padding: 0;
+            color: var(--text); font-size: 13px;
+        }
+
+        .top-banner {
+            background: #020617; color: #ffffff;
+            padding: 14px 16px; text-align: center;
+            font-size: 15px; font-weight: bold;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .nav-tabs {
+            display: flex; background: #ffffff;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px 6px;
+            text-align: center; font-size: 12px; font-weight: 700;
+            background: #ffffff; border: none; cursor: pointer;
+            color: #475569; border-bottom: 3px solid transparent; white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: var(--accent); border-bottom-color: var(--accent); background: #bae6fd;
+        }
+
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        .card {
+            background: var(--card-bg); border-radius: 12px;
+            padding: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12); border: 2px solid var(--border);
+        }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h3 { font-size: 14px; color: var(--primary); margin: 0; font-weight: 700; border-left: 4px solid var(--accent); padding-left: 8px; }
+
+        .btn {
+            background-color: var(--green); color: white; border: 1px solid var(--border);
+            padding: 10px 12px; width: 100%; border-radius: 8px; font-size: 13px; font-weight: 700;
+            cursor: pointer; text-align: center; text-decoration: none; box-sizing: border-box; display: inline-block;
+        }
+        .btn-blue { background-color: var(--accent); } 
+        .btn-red { background-color: var(--red); } 
+        .btn-orange { background-color: var(--orange); }
+
+        .btn-plus {
+            background: var(--accent); color: white; border: 1px solid var(--border);
+            width: 32px; height: 32px; border-radius: 50%; font-size: 18px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #020617; }
+        input, select, textarea {
+            width: 100%; padding: 10px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 13px; font-family: 'Battambang', Arial, sans-serif;
+            box-sizing: border-box; background: #ffffff; color: #020617; outline: none; font-weight: 600;
+        }
+
+        .item-row-compact {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background: #f8fafc; border-radius: 6px;
+            margin-bottom: 6px; border: 1.5px solid var(--border); font-size: 12px; color: #020617;
+        }
+
+        #missionMapContainer {
+            height: 300px; width: 100%; border-radius: 8px;
+            border: 1.5px solid var(--border); margin-top: 10px; position: relative;
+        }
+
+        .compass-box {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(2, 6, 23, 0.88); color: white;
+            padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 1000;
+            border: 1px solid #ffffff; display: flex; align-items: center; gap: 6px;
+        }
+
+        .my-location-btn-map {
+            position: absolute; bottom: 15px; right: 10px;
+            background: var(--accent); color: white; padding: 8px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; z-index: 1000; border: 1.5px solid var(--border); cursor: pointer;
+        }
+
+        .user-location-marker { width: 50px; height: 50px; position: relative; }
+        .user-location-arrow {
+            width: 0; height: 0; 
+            border-left: 12px solid transparent; border-right: 12px solid transparent;
+            border-bottom: 28px solid #2563eb; position: absolute; top: 0; left: 13px;
+            transform-origin: 12px 25px; transition: transform 0.1s linear;
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.4));
+        }
+        .user-location-dot {
+            width: 16px; height: 16px; background: #ffffff;
+            border: 3.5px solid #2563eb; border-radius: 50%;
+            position: absolute; top: 17px; left: 17px; box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+
+        .group-container {
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px;
+        }
+        .group-tag-btn {
+            background: #ffffff; border: 1.5px solid var(--border); padding: 6px 12px;
+            border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap;
+            cursor: pointer; color: var(--primary);
+        }
+        .group-tag-btn.active {
+            background: var(--accent); color: white; border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-banner">📋 ជំនួយការផែនការលក់ & បេសកកម្ម Pro</div>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('missionTab', this)">🚀 បេសកកម្ម</button>
+        <button class="tab-btn" onclick="switchTab('visitTab', this)">📍 ជួបផ្ទាល់</button>
+        <button class="tab-btn" onclick="switchTab('onlineTab', this)">💻 អនឡាញ</button>
+        <button class="tab-btn" onclick="switchTab('contactTab', this)">📇 ទំនាក់ទំនង</button>
+        <button class="tab-btn" onclick="switchTab('appointTab', this)">📅 ណាត់ជួប</button>
+        <button class="tab-btn" onclick="switchTab('reportTab', this)">📊 របាយការណ៍</button>
+    </div>
+
+    <div class="container">
+        <!-- TAB 1: MISSION TRACKER -->
+        <div id="missionTab" class="tab-content">
+            <div class="card">
+                <h3>🚀 តាមដានបេសកកម្ម និងការធ្វើដំណើរ</h3>
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button id="btnStartMission" class="btn" onclick="startMission()">▶️ ចុចផ្តើមការងារ</button>
+                    <button id="btnEndMission" class="btn btn-red" onclick="endMission()" style="display:none;">⏹️ ចុចបញ្ចប់ការងារ</button>
+                </div>
+                <div id="missionStatusBox" style="margin-top: 10px; font-size: 12px; font-weight: bold;">ស្ថានភាព: មិនទាន់ចាប់ផ្តើមបេសកកម្ម</div>
+
+                <div id="mapWrapper" style="position:relative;">
+                    <div id="missionMapContainer">
+                        <div class="compass-box">
+                            <span>🧭 <span id="compassHeadingText">ជើង (N)</span></span>
+                            <button onclick="requestCompassPermission()" style="background:#2563eb; color:white; border:none; padding:2px 6px; border-radius:10px; font-size:10px; cursor:pointer;">⚡ Sensor</button>
+                        </div>
+                        <button class="my-location-btn-map" onclick="centerMissionMapToMyLocation()">🎯 ទីតាំងខ្ញុំ</button>
+                    </div>
+                </div>
+
+                <div style="background:#eff6ff; border:1.5px solid var(--accent); padding:10px; border-radius:8px; margin-top:8px; font-size:12px; font-weight:bold; color:#1e40af; display:flex; justify-content:space-between; align-items:center;">
+                    <div id="currentBoundaryInfo">📍 ទីតាំងបច្ចុប្បន្ន: កំពុងស្កែន...</div>
+                    <button class="btn btn-blue" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyCurrentAddress()">📋 Copy អាសយដ្ឋាន</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: FIELD VISIT (WITH DROPDOWN AUTOFILL) -->
+        <div id="visitTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📍 អតិថិជនជួបផ្ទាល់</h3>
+                    <button class="btn-plus" onclick="toggleForm('visitForm')">+</button>
+                </div>
+                <div id="visitForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group" style="background:#e0f2fe; padding:8px; border-radius:8px; border:1px solid var(--border);">
+                        <label style="color:#020617;">📇 ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <select id="selectContactVisit" onchange="autoFillContact('visit')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="custName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="custAddress" placeholder="ឧ. ផ្លូវ 271 ឬ ភូមិ១"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ</label><input type="text" id="custPhone" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 Google Maps Link / ទីតាំង GPS</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="custLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue" style="width:90px; font-size:11px;" onclick="getGPSLocation('custLocation', 'custAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="saveCustomer()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="customerListContainer"></div></div>
+        </div>
+
+        <!-- TAB 3: ONLINE (WITH DROPDOWN AUTOFILL) -->
+        <div id="onlineTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>💻 បញ្ជីអនឡាញ</h3>
+                    <button class="btn-plus" onclick="toggleForm('onlineForm')">+</button>
+                </div>
+                <div id="onlineForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group" style="background:#e0f2fe; padding:8px; border-radius:8px; border:1px solid var(--border);">
+                        <label style="color:#020617;">📇 ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <select id="selectContactOnline" onchange="autoFillContact('online')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="onlineCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន</label><input type="text" id="onlineCustAddress" placeholder="ឧ. ផ្លូវ 271"></div>
+                    <div class="form-group"><label>ឈ្មោះទំនិញ</label><input type="text" id="onlineItemName" placeholder="ឈ្មោះទំនិញ"></div>
+                    <button class="btn btn-blue" onclick="saveOnlineItem()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="onlineItemListContainer"></div></div>
+        </div>
+
+        <!-- TAB 4: CONTACTS WITH LOCATION GROUP TAGS -->
+        <div id="contactTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📇 បញ្ជីឈ្មោះទំនាក់ទំនង</h3>
+                    <button class="btn-plus" onclick="toggleForm('contactForm')">+</button>
+                </div>
+                <div id="contactForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះទំនាក់ទំនង</label><input type="text" id="manualContactName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="manualContactAddress" placeholder="ឧ. ផ្លូវជាតិលេខ 3"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ/ព័ត៌មាន</label><input type="text" id="manualContactInfo" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 Google Maps Link (ទីតាំង GPS)</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="manualContactLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue" style="width:90px; font-size:11px;" onclick="getGPSLocation('manualContactLocation', 'manualContactAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-blue" onclick="saveManualContact()">រក្សាទុកទំនាក់ទំនង</button>
+                </div>
+            </div>
+            <div class="card">
+                <input type="text" id="searchContactInput" placeholder="🔍 ស្វែងរកឈ្មោះ ឬទីតាំង..." onkeyup="filterContacts()" style="margin-bottom:10px;">
+                <div class="group-container" id="locationGroupsContainer"></div>
+                <div id="allContactsContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: APPOINTMENTS -->
+        <div id="appointTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📅 ការណាត់ជួប</h3>
+                    <button class="btn-plus" onclick="toggleForm('appointForm')">+</button>
+                </div>
+                <div id="appointForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="appCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>កាលបរិច្ឆេទ</label><input type="datetime-local" id="appDateTime"></div>
+                    <button class="btn btn-blue" onclick="saveAppointment()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="appointmentListContainer"></div></div>
+        </div>
+
+        <!-- TAB 6: REPORTS & PERSONAL SUPPORT -->
+        <div id="reportTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>📊 របាយការណ៍សង្ខេប</h3>
+                <div id="reportSummaryBox" style="font-size: 13px; line-height: 1.6; background: #e0f2fe; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight:600;"></div>
+            </div>
+
+            <div class="card">
+                <h3>🏢 ព័ត៌មានគណនី (Team Code)</h3>
+                <p style="font-size:12px;">
+                    <b>User ID:</b> <span id="userIdDisplay" style="color:#2563eb; font-weight:bold;"></span>
+                </p>
+            </div>
+
+            <div class="card" style="background:#fff7ed; border-color:#ea580c;">
+                <h3 style="border-left-color:#ea580c;">💬 ជំនួយបច្ចេកទេស & ទំនាក់ទំនងផ្ទាល់</h3>
+                <p style="font-size:12px; color:#020617; line-height:1.6; margin-top:8px;">
+                    ប្រសិនបើបងមានចម្ងល់ ឬចង់ស្នើសុំបន្ថែមមុខងារផ្សេងៗ អាចទាក់ទងមកខ្ញុំផ្ទាល់តាមរយៈ៖
+                </p>
+                <div style="font-size:12px; font-weight:bold; margin:10px 0; line-height:1.8;">
+                    👤 ឈ្មោះ: <b>មុំ សាមាន</b><br>
+                    💬 Telegram: <a href="https://t.me/SameanMom168" target="_blank" style="color:#2563eb;">@SameanMom168</a><br>
+                    📞 ទូរស័ព្ទ: <a href="tel:0964444679" style="color:#2563eb;">0964444679</a>
+                </div>
+                <a href="https://t.me/SameanMom168" target="_blank" class="btn btn-orange">💬 ទាក់ទងតាម Telegram ផ្ទាល់</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp; tg.expand();
+        let userId = localStorage.getItem('sales_user_uuid') || ('USER_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        localStorage.setItem('sales_user_uuid', userId);
+
+        let customers = JSON.parse(localStorage.getItem('sales_customers')) || [];
+        let onlineItems = JSON.parse(localStorage.getItem('sales_online')) || [];
+        let manualContacts = JSON.parse(localStorage.getItem('sales_manual_contacts')) || [];
+        let appointments = JSON.parse(localStorage.getItem('sales_appoint')) || [];
+
+        let missionMap = null, watchId = null, currentMission = null, myLocationMarker = null, currentPolyline = null;
+        let customerMarkersGroup = null;
+        let currentHeading = 0, currentRawAddress = '';
+
+        document.getElementById('userIdDisplay').innerText = userId;
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block'; btn.classList.add('active');
+            
+            if(tabId === 'contactTab') loadAllContacts();
+            if(tabId === 'visitTab' || tabId === 'onlineTab') populateContactDropdowns();
+            if(tabId === 'visitTab') loadCustomers();
+            if(tabId === 'onlineTab') loadOnlineItems();
+            if(tabId === 'appointTab') loadAppointments();
+            if(tabId === 'reportTab') generateReport();
+            if(tabId === 'missionTab') {
+                if (!missionMap) initMissionMap();
+                else renderSavedCustomerMarkers();
+            }
+        }
+
+        function toggleForm(id) {
+            let f = document.getElementById(id);
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        /* --- SENSOR COMPASS LOGIC --- */
+        function requestCompassPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {សូមអភ័យទោសផងបង! មូលហេតុដែលបណ្តាលឱ្យចេញកូដលើអេក្រង់បែបនេះ គឺដោយសារការផ្ញើចម្លើយកាលពីមុនមានទំហំវែងពេក ទើបធ្វើឱ្យប្រព័ន្ធកាត់ដាច់ផ្នែកខាងលើ និងផ្នែកខាងក្រោមនៃ Code (`<!DOCTYPE html>` និង `<script>`)។
+
+ដើមហេតុដែលធ្វើឱ្យ App យឺតកាលពីមុន **មិនមែនដោយសារមុខងារ Auto-fill ជ្រើសរើសទំនាក់ទំនង ឬការបង្ហាញ PIN លើ Maps នោះទេ** ប៉ុន្តែដោយសារប្រព័ន្ធហៅស្កែន GPS អាសយដ្ឋានរៀងរាល់វិនាទី (Continuous Geocoding)។ 
+
+នៅក្នុង **Full Code ពេញលេញ ១០០% គ្មានការកាត់ដាច់** ខាងក្រោមនេះ ខ្ញុំបានសម្រួលឱ្យ៖
+1. **ដើរលឿនស្លេវ $100\%$** (មិនហៅ GPS ឥតន័យនាំឱ្យស្ទះ)។
+2. **មាន Dropdown ជ្រើសរើសទំនាក់ទំនងស្រាប់** ទាំងក្នុងទំព័រ "ជួបផ្ទាល់" និង "អនឡាញ" (មិនបាច់វាយបញ្ចូលថ្មីនាំតែពិបាក)។
+3. **បង្ហាញ PIN ទីតាំងអតិថិជនស្វ័យប្រវត្តិ** លើផែនទីបេសកកម្ម។
+4. **មានប៊ូតុងចម្រោះតាម ផ្លូវ/ភូមិ (Location Grouping)** ងាយស្រួលមើលពេលចុះបេសកកម្ម។
+
+---
+
+### 💻 FULL CODE HTML/JS ពេញលេញ ១០០% (សូម Copy កូដខាងក្រោមទាំងស្រុង)
+
+```html
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Planner Pro</title>
+    
+    <script src="[https://telegram.org/js/telegram-web-app.js](https://telegram.org/js/telegram-web-app.js)"></script>
+    <link href="[https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap)" rel="stylesheet">
+    <link rel="stylesheet" href="[https://unpkg.com/leaflet@1.9.4/dist/leaflet.css](https://unpkg.com/leaflet@1.9.4/dist/leaflet.css)
