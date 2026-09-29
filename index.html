@@ -1,0 +1,129 @@
+/* --- PERSISTENT BACKGROUND & AUTO-RESUME MISSION LOGIC --- */
+let missionMap = null, watchId = null, currentMission = null, myLocationMarker = null, currentPolyline = null;
+let customerMarkersGroup = null;
+let currentHeading = 0, currentRawAddress = '';
+
+// រៀបចំមុខងារ Restore ពេលបើក App ឡើងវិញ
+function initMissionTracking() {
+    let savedMission = localStorage.getItem('sales_active_mission');
+    if (savedMission) {
+        currentMission = JSON.parse(savedMission);
+        document.getElementById('btnStartMission').style.display = 'none';
+        document.getElementById('btnEndMission').style.display = 'block';
+        document.getElementById('missionStatusBox').innerText = "🟢 កំពុងបន្តកត់ត្រាបេសកកម្ម (Auto-Resumed)...";
+        
+        // ចាប់ផ្តើម Catch Geolocation ឡើងវិញភ្លាមៗ
+        startGeolocationWatch();
+    }
+}
+
+function startMission() {
+    if (!navigator.geolocation) {
+        alert("ទូរស័ព្ទរបស់អ្នកមិនគាំទ្រ GPS ទេ!");
+        return;
+    }
+
+    currentMission = {
+        date: new Date().toISOString().slice(0, 10),
+        startTime: new Date().toLocaleTimeString(),
+        endTime: null,
+        points: [],
+        status: 'ACTIVE'
+    };
+
+    // រក្សាទុក State ដំបូងចូល LocalStorage
+    localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+
+    document.getElementById('btnStartMission').style.display = 'none';
+    document.getElementById('btnEndMission').style.display = 'block';
+    document.getElementById('missionStatusBox').innerText = "🟢 កំពុងកត់ត្រាបេសកកម្ម...";
+
+    if (currentPolyline && missionMap) missionMap.removeLayer(currentPolyline);
+    if (missionMap) {
+        currentPolyline = L.polyline([], { color: '#dc2626', weight: 5 }).addTo(missionMap);
+    }
+
+    startGeolocationWatch();
+}
+
+function startGeolocationWatch() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+
+    // កំណត់ Enable High Accuracy & Dynamic Tracking
+    watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            let lat = pos.coords.latitude, lng = pos.coords.longitude;
+
+            if (!currentMission) return;
+
+            // ឆែកមើលក្រែងលោ GPS ដដែលៗ (Avoid Duplicates to save memory)
+            let lastPoint = currentMission.points[currentMission.points.length - 1];
+            if (!lastPoint || (lastPoint.lat !== lat || lastPoint.lng !== lng)) {
+                currentMission.points.push({ lat, lng, time: new Date().toISOString() });
+                
+                // 🔄 រក្សាទុកចូល LocalStorage រៀងរាល់ពេលមាន Point ថ្មី (បិទ App ក៏មិនបាត់)
+                localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+            }
+
+            // Update លើ Map ប្រសិនបើ Map ត្រូវបាន Loaded
+            if (missionMap) {
+                if (!currentPolyline) {
+                    currentPolyline = L.polyline([], { color: '#dc2626', weight: 5 }).addTo(missionMap);
+                    // Re-draw All Points
+                    let latLngs = currentMission.points.map(p => [p.lat, p.lng]);
+                    currentPolyline.setLatLngs(latLngs);
+                } else {
+                    currentPolyline.addLatLng([lat, lng]);
+                }
+
+                if (myLocationMarker) myLocationMarker.setLatLng([lat, lng]);
+            }
+        },
+        (err) => {
+            console.warn("GPS Tracking Error: ", err.message);
+        },
+        { 
+            enableHighAccuracy: true, 
+            maximumAge: 5000, 
+            timeout: 15000 
+        }
+    );
+}
+
+function endMission() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+
+    if (currentMission) {
+        currentMission.endTime = new Date().toLocaleTimeString();
+        currentMission.status = 'COMPLETED';
+
+        // រក្សាទុកប្រវត្តិបេសកកម្មដែលបានបញ្ចប់ចូល History Log
+        let history = JSON.parse(localStorage.getItem('sales_mission_history')) || [];
+        history.push(currentMission);
+        localStorage.setItem('sales_mission_history', JSON.stringify(history));
+
+        // 🗑️ លុប Active Mission ចេញដើម្បីបញ្ចប់ការកត់ត្រា
+        localStorage.removeItem('sales_active_mission');
+        currentMission = null;
+    }
+
+    document.getElementById('btnStartMission').style.display = 'block';
+    document.getElementById('btnEndMission').style.display = 'none';
+    document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មបានបញ្ចប់!";
+
+    if (currentPolyline && missionMap) {
+        missionMap.removeLayer(currentPolyline);
+        currentPolyline = null;
+    }
+}
+
+// Update DOMContentLoaded Hook
+window.addEventListener('DOMContentLoaded', () => {
+    checkFirstTimeUser();
+    checkTrialStatus();
+    loadAllContacts();
+    initMissionMap();
+    
+    // បន្ថែមត្រង់នេះដើម្បី Check & Resume Mission ប្រសិនបើបិទ App ហើយបើកមកវិញ
+    initMissionTracking(); 
+});
