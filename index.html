@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sales Planner Pro</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: #f4f6f9; margin: 0; padding: 15px; color: #333; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .lang-switch { display: flex; gap: 6px; }
+        .lang-btn { background: white; border: 1px solid #ddd; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 15px; }
+        h1 { font-size: 20px; margin: 0 0 5px 0; color: #111827; }
+        p.subtitle { font-size: 13px; color: #6b7280; margin-top: 0; margin-bottom: 15px; }
+
+        .menu-btn { display: flex; align-items: center; width: 100%; background: #2563eb; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: 600; margin-bottom: 10px; cursor: pointer; }
+        .menu-btn:active { opacity: 0.85; }
+        
+        .status-bar { text-align: center; font-size: 12px; color: #16a34a; font-weight: bold; margin-top: 10px; }
+
+        /* Pop-up លក្ខខណ្ឌប្រើប្រាស់ (Terms Modal) */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: white; border-radius: 16px; padding: 20px; max-width: 400px; width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; color: #1e293b; text-align: center; }
+        .terms-body { font-size: 13px; color: #475569; line-height: 1.6; height: 180px; overflow-y: scroll; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 15px; }
+        .agree-btn { width: 100%; background: #16a34a; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .agree-btn:active { background: #15803d; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- ផ្ទាំង Pop-up លក្ខខណ្ឌ & ភ្ជាប់ Telegram (បង្ហាញតែលើកដំបូង) -->
+    <div id="termsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title" data-i18n="termsTitle">📜 កិច្ចព្រមព្រៀង & លក្ខខណ្ឌ</div>
+            <div class="terms-body">
+                <p data-i18n="termsText">សូមអាន និងយល់ព្រមលើលក្ខខណ្ឌប្រើប្រាស់កម្មវិធី Sales Planner Pro៖</p>
+                <ul>
+                    <li data-i18n="term1">ទិន្នន័យទីតាំង និងរបាយការណ៍ត្រូវបានរក្សាទុកដោយសុវត្ថិភាព។</li>
+                    <li data-i18n="term2">កម្មវិធីតម្រូវឱ្យភ្ជាប់ជាមួយ Telegram Account ដើម្បី Sync ទិន្នន័យ។</li>
+                    <li data-i18n="term3">លោកអ្នកទទួលបានការសាកល្បងប្រើប្រាស់ Free ៣០ ថ្ងៃដំបូង។</li>
+                </ul>
+            </div>
+            <button class="agree-btn" onclick="acceptTerms()" data-i18n="agreeBtn">✅ យល់ព្រម និងភ្ជាប់ Telegram</button>
+        </div>
+    </div>
+
+    <!-- ផ្ទៃកម្មវិធីមេ -->
+    <div class="header">
+        <div id="userInfo" style="font-size: 14px; font-weight: bold; color: #374151;">👤 <span id="userName">User</span></div>
+        <div class="lang-switch">
+            <button class="lang-btn" onclick="changeLanguage('km')">🇰🇭</button>
+            <button class="lang-btn" onclick="changeLanguage('en')">🇬🇧</button>
+            <button class="lang-btn" onclick="changeLanguage('zh')">🇨🇳</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h1 data-i18n="title">Sales Planner Pro</h1>
+        <p class="subtitle" data-i18n="subtitle">ប្រព័ន្ធគ្រប់គ្រង និងរៀបចំផែនការលក់ឆ្លាតវៃ</p>
+
+        <button class="menu-btn" onclick="openFeature('Mission')">
+            <span style="margin-right: 10px; font-size: 18px;">🚀</span> 
+            <span data-i18n="missionBtn">កត់ត្រាចម្ងាយផ្លូវ (Mission)</span>
+        </button>
+
+        <button class="menu-btn" style="background: #059669;" onclick="openFeature('Customer')">
+            <span style="margin-right: 10px; font-size: 18px;">📍</span> 
+            <span data-i18n="customerBtn">បញ្ជីទីតាំងអតិថិជន</span>
+        </button>
+
+        <button class="menu-btn" style="background: #d97706;" onclick="openFeature('Report')">
+            <span style="margin-right: 10px; font-size: 18px;">📅</span> 
+            <span data-i18n="reportBtn">របាយការណ៍សង្ខេប</span>
+        </button>
+
+        <div class="status-bar" id="syncStatus" data-i18n="syncStatus">🟢 បានភ្ជាប់ជាមួយ Telegram ជោគជ័យ</div>
+    </div>
+
+    <script>
+        // 1. Dictionary សម្រាប់ ៣ ភាសា (ខ្មែរ អង់គ្លេស ចិន)
+        const i18n = {
+            km: {
+                title: "Sales Planner Pro",
+                subtitle: "ប្រព័ន្ធគ្រប់គ្រង និងរៀបចំផែនការលក់ឆ្លាតវៃ",
+                missionBtn: "កត់ត្រាចម្ងាយផ្លូវ (Mission)",
+                customerBtn: "បញ្ជីទីតាំងអតិថិជន",
+                reportBtn: "របាយការណ៍សង្ខេប",
+                syncStatus: "🟢 បានភ្ជាប់ជាមួយ Telegram ជោគជ័យ",
+                termsTitle: "📜 កិច្ចព្រមព្រៀង & លក្ខខណ្ឌ",
+                termsText: "សូមអាន និងយល់ព្រមលើលក្ខខណ្ឌប្រើប្រាស់កម្មវិធី Sales Planner Pro៖",
+                term1: "ទិន្នន័យទីតាំង និងរបាយការណ៍ត្រូវបានរក្សាទុកដោយសុវត្ថិភាព។",
+                term2: "កម្មវិធីតម្រូវឱ្យភ្ជាប់ជាមួយ Telegram Account ដើម្បី Sync ទិន្នន័យ។",
+                term3: "លោកអ្នកទទួលបានការសាកល្បងប្រើប្រាស់ Free ៣០ ថ្ងៃដំបូង។",
+                agreeBtn: "✅ យល់ព្រម និងភ្ជាប់ Telegram",
+                msgMission: "កំពុងបើកមុខងារកត់ត្រាចម្ងាយផ្លូវ...",
+                msgCustomer: "កំពុងបើកបញ្ជីទីតាំងអតិថិជន...",
+                msgReport: "កំពុងបើករបាយការណ៍សង្ខេប..."
+            },
+            en: {
+                title: "Sales Planner Pro",
+                subtitle: "Smart Sales Management System",
+                missionBtn: "Mission Tracker",
+                customerBtn: "Customer Locations",
+                reportBtn: "Summary Reports",
+                syncStatus: "🟢 Connected to Telegram successfully",
+                termsTitle: "📜 Terms & Conditions",
+                termsText: "Please read and agree to the terms of Sales Planner Pro:",
+                term1: "Location and report data are saved securely.",
+                term2: "Requires Telegram Account connection for data sync.",
+                term3: "Includes 30 days Free Trial.",
+                agreeBtn: "✅ Agree & Connect Telegram",
+                msgMission: "Opening Mission Tracker...",
+                msgCustomer: "Opening Customer Locations...",
+                msgReport: "Opening Summary Reports..."
+            },
+            zh: {
+                title: "销售规划师 Pro",
+                subtitle: "智能销售规划与管理系统",
+                missionBtn: "行程跟踪 (Mission)",
+                customerBtn: "客户位置列表",
+                reportBtn: "总结报告",
+                syncStatus: "🟢 已成功连接至 Telegram",
+                termsTitle: "📜 条款与条件",
+                termsText: "请阅读并同意 Sales Planner Pro 的使用条款：",
+                term1: "位置和报告数据均已安全保存。",
+                term2: "需要连接 Telegram 账号以同步数据。",
+                term3: "包含 30 天免费试用期。",
+                agreeBtn: "✅ 同意并连接 Telegram",
+                msgMission: "正在打开行程跟踪...",
+                msgCustomer: "正在打开客户位置列表...",
+                msgReport: "正在打开总结报告..."
+            }
+        };
+
+        let currentLang = localStorage.getItem('app_lang') || 'km';
+
+        // មុខងារប្តូរភាសារហ័ស
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('app_lang', lang);
+            const textData = i18n[lang] || i18n.km;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (textData[key]) el.innerText = textData[key];
+            });
+        }
+
+        // 2. ការបញ្ជាក់ភ្ជាប់ Telegram & លក្ខខណ្ឌ
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // ពិនិត្យមើលថា User ធ្លាប់ចុច "យល់ព្រម" ឬនៅ
+        if (localStorage.getItem('isTermsAccepted') === 'true') {
+            document.getElementById('termsModal').classList.add('hidden');
+        }
+
+        // មុខងារពេលចុច "យល់ព្រម និងភ្ជាប់ Telegram"
+        function acceptTerms() {
+            localStorage.setItem('isTermsAccepted', 'true');
+            document.getElementById('termsModal').classList.add('hidden');
+            
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            alert("ភ្ជាប់ Telegram ជោគជ័យ! លោកអ្នកអាចចាប់ផ្តើមប្រើប្រាស់បាន។");
+        }
+
+        // បង្ហាញឈ្មោះអ្នកប្រើប្រាស់ពី Telegram
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('userName').innerText = tg.initDataUnsafe.user.first_name;
+        }
+
+        // 3. មុខងារចុចលើប៊ូតុងនីមួយៗ
+        function openFeature(type) {
+            const t = i18n[currentLang];
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+
+            if (type === 'Mission') alert(t.msgMission);
+            else if (type === 'Customer') alert(t.msgCustomer);
+            else if (type === 'Report') alert(t.msgReport);
+        }
+
+        // កំណត់ភាសាដំបូង
+        changeLanguage(currentLang);
+    </script>
+</body>
+</html>
