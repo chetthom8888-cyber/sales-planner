@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="color-scheme" content="light">
+    <meta name="supported-color-schemes" content="light">
+    <title>Sales & Credit Planner Pro</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #020617;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #020617;
+            --red: #dc2626;
+            --red-light: #fca5a5;
+            --green: #16a34a;
+            --orange: #ea580c;
+            --border: #cbd5e1;
+        }
+
+        ::-moz-selection { background-color: #2563eb !important; color: #ffffff !important; }
+        ::selection { background-color: #2563eb !important; color: #ffffff !important; }
+
+        html, body {
+            background-color: var(--bg) !important;
+            color: var(--text) !important;
+            font-family: 'Battambang', Arial, sans-serif;
+            margin: 0; padding: 0;
+            font-size: 13px;
+            min-height: 100vh;
+            color-scheme: light !important;
+        }
+
+        .top-banner {
+            background: #020617; color: #ffffff !important;
+            padding: 12px 16px; text-align: center;
+            font-size: 15px; font-weight: bold;
+            border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .user-pill {
+            background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: normal; display: flex; align-items: center; gap: 6px;
+        }
+
+        .nav-tabs {
+            display: flex; background: #ffffff;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px 6px;
+            text-align: center; font-size: 12px; font-weight: 700;
+            background: #ffffff; border: none; cursor: pointer;
+            color: #475569; border-bottom: 3px solid transparent; white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: var(--accent); border-bottom-color: var(--accent); background: #bae6fd;
+        }
+
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        .card {
+            background: var(--card-bg); border-radius: 12px;
+            padding: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08); border: 1.5px solid var(--border);
+            color: var(--text);
+        }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h3 { font-size: 14px; color: var(--primary); margin: 0; font-weight: 700; border-left: 4px solid var(--accent); padding-left: 8px; }
+
+        .btn {
+            background-color: var(--green); color: white !important; border: 1px solid var(--border);
+            padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+            cursor: pointer; text-align: center; text-decoration: none; box-sizing: border-box; display: inline-block;
+        }
+        .btn-blue { background-color: var(--accent); } 
+        .btn-red { background-color: var(--red); } 
+        .btn-orange { background-color: var(--orange); }
+        .btn-gray { background-color: #64748b; }
+
+        .btn-plus {
+            background: var(--accent); color: white; border: 1px solid var(--border);
+            width: 32px; height: 32px; border-radius: 50%; font-size: 18px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #020617; }
+        
+        input, select, textarea {
+            width: 100%; padding: 10px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 13px; font-family: 'Battambang', Arial, sans-serif;
+            box-sizing: border-box; background: #ffffff !important; color: #020617 !important; outline: none; font-weight: 600;
+            caret-color: #020617 !important;
+            accent-color: #2563eb !important;
+            -webkit-tap-highlight-color: rgba(37, 99, 235, 0.3) !important;
+        }
+
+        .item-row-compact {
+            display: flex; flex-direction: column; gap: 4px;
+            padding: 10px; background: #f8fafc; border-radius: 8px;
+            margin-bottom: 8px; border: 1.5px solid var(--border); font-size: 12px; color: #020617;
+        }
+
+        .badge-status {
+            display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; color: white; margin-left: 6px;
+        }
+        .bg-interested { background-color: #16a34a; }
+        .bg-not-interested { background-color: #dc2626; }
+        .bg-thinking { background-color: #ea580c; }
+
+        .action-btns { display: flex; gap: 6px; margin-top: 6px; }
+        .btn-sm { padding: 4px 8px; font-size: 11px; width: auto; }
+
+        #missionMapContainer {
+            height: 320px; width: 100%; border-radius: 8px;
+            border: 1.5px solid var(--border); margin-top: 10px; position: relative;
+            background: #e2e8f0;
+        }
+
+        .compass-box {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(2, 6, 23, 0.88); color: white;
+            padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 1000;
+            border: 1px solid #ffffff; display: flex; align-items: center; gap: 6px;
+        }
+
+        .my-location-btn-map {
+            position: absolute; bottom: 15px; right: 10px;
+            background: var(--accent); color: white; padding: 8px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; z-index: 1000; border: 1.5px solid var(--border); cursor: pointer;
+        }
+
+        .user-heading-marker {
+            transition: transform 0.1s linear;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .group-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; }
+        .group-tag-btn {
+            background: #ffffff; border: 1.5px solid var(--border); padding: 6px 12px;
+            border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap; cursor: pointer; color: var(--primary);
+        }
+        .group-tag-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .modal-onboarding {
+            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.9); z-index: 10000; justify-content: center; align-items: center;
+        }
+        .onboarding-card {
+            background: #ffffff !important; color: #020617 !important; width: 90%; max-width: 450px; border-radius: 16px;
+            padding: 20px; border: 2px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            text-align: center; max-height: 90vh; overflow-y: auto;
+        }
+        .mode-btn-option {
+            border: 2px solid var(--border); padding: 12px; border-radius: 10px;
+            margin-bottom: 10px; cursor: pointer; text-align: left; background: #f8fafc;
+        }
+        .mode-btn-option.selected { border-color: var(--accent); background: #e0f2fe; }
+
+        .map-legend {
+            background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 8px;
+            border: 1px solid var(--border); font-size: 11px; margin-top: 6px;
+            display: flex; gap: 12px; justify-content: center;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-weight: bold; }
+        .legend-color { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+
+        .target-box {
+            background: #f0f9ff; border: 1.5px solid #0284c7; padding: 10px; border-radius: 8px; margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN & ACCOUNT SELECTION MODAL -->
+    <div id="onboardingModal" class="modal-onboarding">
+        <div class="onboarding-card">
+            <h2 style="margin-top:0; color:#020617; font-size:16px;">🔐 ស្វាគមន៍មកកាន់ Sales & Credit Planner Pro</h2>
+            
+            <div id="tgUserDetectBox" style="background:#f0f9ff; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; text-align:left;">
+                <span style="font-size:11px; color:#0369a1; font-weight:bold;">🤖 ភ្ជាប់ដោយស្វ័យប្រវត្តិ Telegram គណនី៖</span>
+                <div id="tgAuthProfileName" style="font-size:13px; font-weight:bold; color:#020617; margin-top:2px;">កំពុងស្កែន Telegram Info...</div>
+            </div>
+
+            <div style="text-align:left; font-weight:bold; margin-bottom:8px; color:#020617;">១. សូមជ្រើសរើសប្រភេទគណនី៖</div>
+            
+            <div id="optionIndividual" class="mode-btn-option selected" onclick="selectAuthMode('INDIVIDUAL')">
+                <div style="font-weight:bold; color:#020617;">👤 ប្រើប្រាស់លក្ខណៈ ឯកជន (Individual)</div>
+                <div style="font-size:11px; color:#64748b;">បើកប្រើភ្លាមៗជាមួយឈ្មោះ Telegram របស់អ្នក</div>
+            </div>
+
+            <div id="optionCompany" class="mode-btn-option" onclick="selectAuthMode('COMPANY')">
+                <div style="font-weight:bold; color:#020617;">🏢 ប្រើប្រាស់លក្ខណៈ ក្រុមហ៊ុន (Company/Enterprise)</div>
+                <div style="font-size:11px; color:#64748b;">ចូលប្រើប្រាស់ដោយ Name & Password ផ្តល់ជូនដោយ Bot</div>
+            </div>
+
+            <!-- បន្ថែមថ្មី: ការជ្រើសរើសប្រភេទបុគ្គលិក (Sales vs. Microfinance/Bank) -->
+            <div style="text-align:left; font-weight:bold; margin:10px 0 6px 0; color:#020617;">២. ជ្រើសរើសផ្នែកបំពេញការងារ ( Role / Industry )៖</div>
+            <div class="form-group" style="text-align:left;">
+                <select id="userRoleTypeSelect">
+                    <option value="SALES">👔 បុគ្គលិកលក់ (Sales Officer / Executive)</option>
+                    <option value="BANKING">🏦 បុគ្គលិក គ្រឹះស្ថានមីក្រូហិរញ្ញ / ធនាគារ (Credit Officer / MFI)</option>
+                </select>
+            </div>
+
+            <div id="companyAuthForm" style="display:none; text-align:left; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
+                <div style="display:flex; gap:10px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+                    <button class="btn btn-blue btn-sm" id="subTabLoginBtn" style="flex:1;" onclick="switchCompanySubTab('LOGIN')">🔑 គណនីមានស្រាប់</button>
+                    <button class="btn btn-gray btn-sm" id="subTabRequestBtn" style="flex:1;" onclick="switchCompanySubTab('REQUEST')">📝 ស្នើគណនីថ្មី</button>
+                </div>
+
+                <div id="subTabLoginArea">
+                    <div class="form-group">
+                        <label>Username (Bot ផ្តល់ជូន):</label>
+                        <input type="text" id="compUsername" placeholder="ឧ. user_101">
+                    </div>
+                    <div class="form-group">
+                        <label>Password (ពាក្យសម្ងាត់):</label>
+                        <input type="password" id="compPassword" placeholder="••••••••">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-blue" id="btnMainConfirmAuth" style="margin-top:10px; padding:12px; width:100%;" onclick="confirmAuthAndStart()">✅ ព្រមព្រៀង & ចាប់ផ្តើមប្រើប្រាស់</button>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <div class="top-banner">
+        <span>📋 Sales & Credit Planner Pro</span>
+        <div class="user-pill">
+            <span id="topUserDisplay">👤 Telegram User</span>
+        </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('missionTab', this)">🚀 បេសកកម្ម</button>
+        <button class="tab-btn" onclick="switchTab('visitTab', this)">📍 ជួបផ្ទាល់</button>
+        <button class="tab-btn" onclick="switchTab('onlineTab', this)">💻 អនឡាញ</button>
+        <button class="tab-btn" onclick="switchTab('contactTab', this)">📇 ទំនាក់ទំនង</button>
+        <button class="tab-btn" onclick="switchTab('appointTab', this)">📅 ណាត់ជួប</button>
+        <button class="tab-btn" onclick="switchTab('reportTab', this)">📊 របាយការណ៍</button>
+    </div>
+
+    <div class="container">
+        <!-- TAB 1: MISSION TRACKER & MAPS ROUTE -->
+        <div id="missionTab" class="tab-content">
+            <div id="missionReportCaptureArea" class="card">
+                <h3>🚀 តាមដានបេសកកម្ម និងខ្សែផ្លូវ Maps ជាក់ស្តែង</h3>
+                
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btnStartMission" class="btn" style="width:100%;" onclick="startMission()">▶️ ចុចផ្តើមការងារ</button>
+                        <button id="btnEndMission" class="btn btn-red" style="width:100%; display:none;" onclick="endMission()">⏹️ ចុចបញ្ចប់ការងារ</button>
+                    </div>
+                    
+                    <div style="display:flex; gap:6px;">
+                        <button id="btnShareMissionReport" class="btn btn-orange" style="flex:1; display:none;" onclick="shareMissionReportImage('DAILY')">📸 រូបភាព Maps ប្រចាំថ្ងៃ</button>
+                        <button id="btnShareMonthlyReport" class="btn btn-blue" style="flex:1; display:none;" onclick="shareMissionReportImage('MONTHLY')">📊 រូបភាព Maps ប្រចាំខែ</button>
+                    </div>
+                </div>
+
+                <div id="missionStatusBox" style="margin-top: 10px; font-size: 12px; font-weight: bold; color:#020617;">ស្ថានភាព: មិនទាន់ចាប់ផ្តើមបេសកកម្ម</div>
+
+                <div id="mapWrapper" style="position:relative;">
+                    <div id="missionMapContainer">
+                        <div class="compass-box">
+                            <span>🧭 <span id="compassHeadingText">ជើង (0°)</span></span>
+                            <button onclick="requestCompassPermission()" style="background:#2563eb; color:white; border:none; padding:2px 6px; border-radius:10px; font-size:10px; cursor:pointer;">⚡ Sensor</button>
+                        </div>
+                        <button class="my-location-btn-map" onclick="centerMissionMapToMyLocation()">🎯 ទីតាំងខ្ញុំ</button>
+                    </div>
+                </div>
+
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-color" style="background:#dc2626;"></span> ផ្លូវថ្ងៃនេះ (Today)</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#fca5a5;"></span> ផ្លូវថ្ងៃស្អែក/មុនៗ (Past/Future)</div>
+                </div>
+
+                <div style="background:#eff6ff; border:1.5px solid var(--accent); padding:10px; border-radius:8px; margin-top:8px; font-size:12px; font-weight:bold; color:#1e40af; display:flex; justify-content:space-between; align-items:center;">
+                    <div id="currentBoundaryInfo">📍 ទីតាំងបច្ចុប្បន្ន: កំពុងស្កែន...</div>
+                    <button class="btn btn-blue btn-sm" onclick="copyCurrentAddress()">📋 Copy អាសយដ្ឋាន</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: VISIT (ជួបផ្ទាល់ - មានការលក់ និងប្រមូលលុយ) -->
+        <div id="visitTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3 id="visitFormTitle">📍 បញ្ចូលអតិថិជនជួបផ្ទាល់</h3>
+                    <button class="btn-plus" onclick="toggleForm('visitForm')">+</button>
+                </div>
+                <div id="visitForm" style="display:none; margin-top: 10px;">
+                    <input type="hidden" id="editVisitIndex" value="-1">
+                    
+                    <div class="form-group" style="background:#e0f2fe; padding:10px; border-radius:8px; border:1.5px solid #bae6fd;">
+                        <label style="color:#0369a1;">🔍 ស្វែងរក & ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <input type="text" id="searchDropdownVisit" placeholder="🔍 វាយឈ្មោះ ឬលេខទូរស័ព្ទ..." onkeyup="debouncedFilterContactDropdown('visit')" style="margin-bottom:6px; background:#fff !important;">
+                        <select id="selectContactVisit" onchange="autoFillContact('visit')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="custName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="custAddress" placeholder="ឧ. ផ្លូវ 271 ឬ ភូមិ១"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ</label><input type="text" id="custPhone" placeholder="លេខទូរស័ព្ទ"></div>
+                    
+                    <!-- បន្ថែមថ្មី: ចំនួនប្រាក់លក់ / បញ្ចេញឥណទាន & ប្រមូលលុយ -->
+                    <div style="display:flex; gap:8px;">
+                        <div class="form-group" style="flex:1;">
+                            <label id="lblSalesAmount">💰 ទំហំលក់/ឥណទាន ($)</label>
+                            <input type="number" id="custSalesAmount" placeholder="0.00" value="0">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label id="lblCollectAmount">💵 ប្រមូលលុយ/ការប្រាក់ ($)</label>
+                            <input type="number" id="custCollectAmount" placeholder="0.00" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎯 លទ្ធផលសន្ទនា / កម្រិតចាប់អារម្មណ៍</label>
+                        <select id="custInterest">
+                            <option value="INTERESTED">✅ ចាប់អារម្មណ៍ (Interested)</option>
+                            <option value="NOT_INTERESTED">❌ មិនចាប់អារម្មណ៍ (Not Interested)</option>
+                            <option value="THINKING">⏳ កំពុងគិតគូរ (Thinking)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>📝 ហេតុផល / ចំណាំបន្ថែម</label><textarea id="custReason" rows="2" placeholder="ឧ. ត្រូវការពិគ្រោះជាមួយគ្រួសារ..."></textarea></div>
+
+                    <div class="form-group">
+                        <label>📍 Google Maps Link / ទីតាំង GPS</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="custLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue btn-sm" style="width:90px;" onclick="getGPSLocation('custLocation', 'custAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-blue" id="saveVisitBtn" style="flex:1;" onclick="saveCustomer()">រក្សាទុក</button>
+                        <button class="btn btn-gray" id="cancelVisitBtn" style="display:none;" onclick="resetVisitForm()">បោះបង់</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <input type="text" id="searchVisitInput" placeholder="🔍 ស្វែងរកក្នុងបញ្ជីជួបផ្ទាល់..." onkeyup="debouncedLoadCustomers()" style="margin-bottom:10px;">
+                <div id="customerListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: ONLINE (អនឡាញ - មានការលក់ និងប្រមូលលុយ) -->
+        <div id="onlineTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3 id="onlineFormTitle">💻 បញ្ចូលអតិថិជនអនឡាញ</h3>
+                    <button class="btn-plus" onclick="toggleForm('onlineForm')">+</button>
+                </div>
+                <div id="onlineForm" style="display:none; margin-top: 10px;">
+                    <input type="hidden" id="editOnlineIndex" value="-1">
+                    
+                    <div class="form-group" style="background:#e0f2fe; padding:10px; border-radius:8px; border:1.5px solid #bae6fd;">
+                        <label style="color:#0369a1;">🔍 ស្វែងរក & ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <input type="text" id="searchDropdownOnline" placeholder="🔍 វាយឈ្មោះ ឬលេខទូរស័ព្ទ..." onkeyup="debouncedFilterContactDropdown('online')" style="margin-bottom:6px; background:#fff !important;">
+                        <select id="selectContactOnline" onchange="autoFillContact('online')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="onlineCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន</label><input type="text" id="onlineCustAddress" placeholder="ឧ. ផ្លូវ 271"></div>
+                    <div class="form-group"><label>ឈ្មោះទំនិញ/សេវាកម្ម</label><input type="text" id="onlineItemName" placeholder="ឈ្មោះទំនិញ"></div>
+                    
+                    <!-- បន្ថែមថ្មី: ចំនួនប្រាក់លក់ / ឥណទាន & ប្រមូលលុយ -->
+                    <div style="display:flex; gap:8px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>💰 ប្រាក់លក់/ឥណទាន ($)</label>
+                            <input type="number" id="onlineSalesAmount" placeholder="0.00" value="0">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>💵 ប្រមូលលុយ ($)</label>
+                            <input type="number" id="onlineCollectAmount" placeholder="0.00" value="0">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎯 លទ្ធផលសន្ទនា / កម្រិតចាប់អារម្មណ៍</label>
+                        <select id="onlineInterest">
+                            <option value="INTERESTED">✅ ចាប់អារម្មណ៍ (Interested)</option>
+                            <option value="NOT_INTERESTED">❌ មិនចាប់អារម្មណ៍ (Not Interested)</option>
+                            <option value="THINKING">⏳ កំពុងគិតគូរ (Thinking)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>📝 ហេតុផល / ចំណាំបន្ថែម</label><textarea id="onlineReason" rows="2" placeholder="ឧ. សុំគិតមើលសិន..."></textarea></div>
+
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-blue" id="saveOnlineBtn" style="flex:1;" onclick="saveOnlineItem()">រក្សាទុក</button>
+                        <button class="btn btn-gray" id="cancelOnlineBtn" style="display:none;" onclick="resetOnlineForm()">បោះបង់</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <input type="text" id="searchOnlineInput" placeholder="🔍 ស្វែងរកក្នុងបញ្ជីអនឡាញ..." onkeyup="debouncedLoadOnlineItems()" style="margin-bottom:10px;">
+                <div id="onlineItemListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: CONTACTS -->
+        <div id="contactTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex" style="gap:8px;">
+                    <h3 id="contactFormTitle" style="white-space:nowrap;">📇 ទំនាក់ទំនង</h3>
+                    <div style="display:flex; gap:6px; width:100%; justify-content:flex-end; align-items:center;">
+                        <input type="text" id="searchContactInput" placeholder="🔍 ស្វែងរកឈ្មោះ..." onkeyup="debouncedFilterContacts()" style="padding:6px 10px; font-size:12px; margin:0;">
+                        <button class="btn-plus" onclick="toggleForm('contactForm')" title="បន្ថែមទំនាក់ទំនងថ្មី">+</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-blue btn-sm" style="width:100%; margin-bottom:8px; background:#15803d;" onclick="exportContactsToExcelCSV()">📥 ទាញយកបញ្ជីទំនាក់ទំនងជា Excel (.csv)</button>
+
+                <div id="contactForm" style="display:none; margin-top: 10px;">
+                    <input type="hidden" id="editContactIndex" value="-1">
+                    <div class="form-group"><label>ឈ្មោះទំនាក់ទំនង</label><input type="text" id="manualContactName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="manualContactAddress" placeholder="ឧ. ផ្លូវជាតិលេខ 3"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ/ព័ត៌មាន</label><input type="text" id="manualContactInfo" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 Google Maps Link (ទីតាំង GPS)</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="manualContactLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue btn-sm" style="width:90px;" onclick="getGPSLocation('manualContactLocation', 'manualContactAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-blue" id="saveContactBtn" style="flex:1;" onclick="saveManualContact()">រក្សាទុកទំនាក់ទំនង</button>
+                        <button class="btn btn-gray" id="cancelContactBtn" style="display:none;" onclick="resetContactForm()">បោះបង់</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="group-container" id="locationGroupsContainer"></div>
+                <div id="allContactsContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: APPOINTMENTS -->
+        <div id="appointTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📅 ការណាត់ជួប</h3>
+                    <button class="btn-plus" onclick="toggleForm('appointForm')">+</button>
+                </div>
+                <div id="appointForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="appCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>កាលបរិច្ឆេទ</label><input type="datetime-local" id="appDateTime"></div>
+                    <button class="btn btn-blue" style="width:100%;" onclick="saveAppointment()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="appointmentListContainer"></div></div>
+        </div>
+
+        <!-- TAB 6: REPORTS & TARGET MANAGEMENT -->
+        <div id="reportTab" class="tab-content" style="display:none;">
+            <!-- បន្ថែមថ្មី: TARGET DASHBOARD CONFIGURATION CARD -->
+            <div class="card" style="background:#f0f9ff; border-color:#0284c7;">
+                <div class="card-header-flex">
+                    <h3 style="border-left-color:#0284c7;">🎯 កំណត់ Target លក់/ឥណទាន & ប្រមូលលុយ (Editable Target)</h3>
+                    <button class="btn btn-blue btn-sm" onclick="toggleForm('targetConfigForm')">⚙️ កែសម្រួល Target</button>
+                </div>
+
+                <div id="targetConfigForm" style="display:none; margin-top:10px; background:#ffffff; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                    <div style="font-weight:bold; margin-bottom:8px; color:#0369a1;">កំណត់ប្រាក់គោលដៅ (Target Setting):</div>
+                    <div style="display:flex; gap:8px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>🎯 Target លក់/ឥណទានប្រចាំថ្ងៃ ($)</label>
+                            <input type="number" id="targetSalesDailyInput" placeholder="0">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>🎯 Target លក់/ឥណទានប្រចាំខែ ($)</label>
+                            <input type="number" id="targetSalesMonthlyInput" placeholder="0">
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>💵 Target ប្រមូលប្រាក់ប្រចាំថ្ងៃ ($)</label>
+                            <input type="number" id="targetCollectDailyInput" placeholder="0">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>💵 Target ប្រមូលប្រាក់ប្រចាំខែ ($)</label>
+                            <input type="number" id="targetCollectMonthlyInput" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- ផ្នែកបន្ថែមសម្រាប់ BANKING/MFI Standard Target -->
+                    <div id="bankingTargetFields" style="display:none; border-top:1px dashed #cbd5e1; padding-top:8px; margin-top:6px;">
+                        <div style="font-weight:bold; margin-bottom:6px; color:#2563eb;">🏦 ស្តង់ដារ Target ធនាគារ/មីក្រូហិរញ្ញ (Bank Standard):</div>
+                        <div style="display:flex; gap:8px;">
+                            <div class="form-group" style="flex:1;">
+                                <label>🏦 Target ស្វែងរកប្រាក់ផ្ញើ/Deposit ($)</label>
+                                <input type="number" id="targetDepositMonthlyInput" placeholder="0">
+                            </div>
+                            <div class="form-group" style="flex:1;">
+                                <label>⚠️ គ្រប់គ្រង PAR/NPL Target (%)</label>
+                                <input type="number" id="targetParMonthlyInput" placeholder="1.5" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-blue" style="width:100%; margin-top:4px;" onclick="saveTargetSettings()">💾 រក្សាទុកការកំណត់ Target</button>
+                </div>
+
+                <div id="targetSummaryDisplay" style="font-size:12px; line-height:1.6; margin-top:6px;"></div>
+            </div>
+
+            <!-- របាយការណ៍សង្ខេប (រួមបញ្ចូលរបាយការណ៍ចាស់ + របាយការណ៍ Target ថ្មី) -->
+            <div class="card">
+                <h3>📊 របាយការណ៍ការងារ & សមិទ្ធផលលក់/ប្រមូលលុយ</h3>
+                <div id="reportSummaryBox" style="font-size: 12.5px; line-height: 1.6; background: #e0f2fe; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight:600; color:#020617; white-space: pre-line;"></div>
+                <button class="btn btn-orange" style="width:100%;" onclick="shareReportTextToTelegram()">💬 ចែករំលែករបាយការណ៍ទៅ Telegram</button>
+            </div>
+
+            <!-- CLOUD DATABASE BACKUP CARD -->
+            <div class="card" style="background:#f0fdf4; border-color:#16a34a;">
+                <h3 style="border-left-color:#16a34a;">☁️ ប្រព័ន្ធ Cloud Database Backup & Realtime Sync</h3>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button class="btn btn-blue btn-sm" style="flex:1;" onclick="syncDataToCloud()">☁️ រក្សាទុកទៅ Cloud (Sync)</button>
+                    <button class="btn btn-orange btn-sm" style="flex:1;" onclick="restoreDataFromCloud()">🔄 ទាញយកពី Cloud (Restore)</button>
+                </div>
+                <div id="cloudSyncStatus" style="font-size:11px; font-weight:bold; color:#0369a1; margin-top:6px;"></div>
+            </div>
+
+            <div class="card">
+                <h3>🏢 ព័ត៌មានគណនី & Telegram Login</h3>
+                <p style="font-size:12px; color:#020617;">
+                    <b>ឈ្មោះគណនី:</b> <span id="accountUserDisplay" style="color:#2563eb; font-weight:bold;">---</span><br>
+                    <b>ប្រភេទគណនី:</b> <span id="accountTypeDisplay" style="color:#2563eb; font-weight:bold;">---</span><br>
+                    <b>ផ្នែកបំពេញការងារ:</b> <span id="accountRoleDisplay" style="color:#16a34a; font-weight:bold;">---</span><br>
+                    <b>User ID:</b> <span id="userIdDisplay" style="color:#ea580c; font-weight:bold;">---</span>
+                </p>
+                <button class="btn btn-blue btn-sm" onclick="reopenOnboarding()">⚙️ ផ្លាស់ប្តូរប្រភេទគណនី ឬ Role ឡើងវិញ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TELEGRAM INITIALIZATION
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        let tgUser = null;
+
+        if (tg) {
+            try {
+                tg.ready();
+                tg.expand();
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    tgUser = tg.initDataUnsafe.user;
+                }
+            } catch (e) { console.warn("Telegram WebApp Error:", e); }
+        }
+
+        let selectedAuthMode = 'INDIVIDUAL';
+        
+        function debounce(func, wait = 250) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function detectTelegramAccount() {
+            let nameBox = document.getElementById('tgAuthProfileName');
+            if (tgUser) {
+                let name = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username || 'Telegram User';
+                nameBox.innerText = `👤 ${name} (ID: ${tgUser.id})`;
+            } else {
+                nameBox.innerText = `👤 Telegram User (Guest Web Mode)`;
+            }
+        }
+
+        function checkFirstTimeUser() {
+            let hasCompleted = localStorage.getItem('app_auth_completed');
+            if (!hasCompleted) {
+                document.getElementById('onboardingModal').style.display = 'flex';
+                detectTelegramAccount();
+            } else {
+                document.getElementById('onboardingModal').style.display = 'none';
+            }
+        }
+
+        function selectAuthMode(mode) {
+            selectedAuthMode = mode;
+            document.getElementById('optionIndividual').classList.remove('selected');
+            document.getElementById('optionCompany').classList.remove('selected');
+
+            if (mode === 'INDIVIDUAL') {
+                document.getElementById('optionIndividual').classList.add('selected');
+                document.getElementById('companyAuthForm').style.display = 'none';
+            } else {
+                document.getElementById('optionCompany').classList.add('selected');
+                document.getElementById('companyAuthForm').style.display = 'block';
+            }
+        }
+
+        function confirmAuthAndStart() {
+            let displayName = tgUser ? (`${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username) : 'Individual User';
+            let roleType = document.getElementById('userRoleTypeSelect').value;
+
+            if (selectedAuthMode === 'COMPANY') {
+                let u = document.getElementById('compUsername').value.trim();
+                let p = document.getElementById('compPassword').value.trim();
+
+                if (!u || !p) { alert("សូមបញ្ចូល Username និង Password ក្រុមហ៊ុន!"); return; }
+                displayName = `Company User (${u})`;
+            }
+
+            localStorage.setItem('sales_account_mode', selectedAuthMode);
+            localStorage.setItem('sales_user_role_type', roleType);
+            localStorage.setItem('sales_user_display_name', displayName);
+            localStorage.setItem('app_auth_completed', 'true');
+
+            document.getElementById('onboardingModal').style.display = 'none';
+            updateProfileDisplay();
+            applyRoleFormLabels();
+        }
+
+        function reopenOnboarding() { 
+            document.getElementById('onboardingModal').style.display = 'flex'; 
+            detectTelegramAccount();
+        }
+
+        function updateProfileDisplay() {
+            let mode = localStorage.getItem('sales_account_mode') || 'INDIVIDUAL';
+            let role = localStorage.getItem('sales_user_role_type') || 'SALES';
+            let name = localStorage.getItem('sales_user_display_name') || 'Telegram User';
+            let uId = tgUser ? tgUser.id : (localStorage.getItem('sales_user_uuid') || 'USER_GUEST');
+
+            document.getElementById('topUserDisplay').innerText = `👤 ${name}`;
+            document.getElementById('accountUserDisplay').innerText = name;
+            document.getElementById('accountTypeDisplay').innerText = mode === 'COMPANY' ? '🏢 ក្រុមហ៊ុន (Enterprise)' : '👤 ឯកជន (Individual)';
+            document.getElementById('accountRoleDisplay').innerText = role === 'BANKING' ? '🏦 បុគ្គលិក ធនាគារ/មីក្រូហិរញ្ញ (MFI)' : '👔 បុគ្គលិកលក់ (Sales Officer)';
+            document.getElementById('userIdDisplay').innerText = uId;
+        }
+
+        function applyRoleFormLabels() {
+            let role = localStorage.getItem('sales_user_role_type') || 'SALES';
+            let lblSales = document.getElementById('lblSalesAmount');
+            let lblCollect = document.getElementById('lblCollectAmount');
+            let bankingFields = document.getElementById('bankingTargetFields');
+
+            if (role === 'BANKING') {
+                if (lblSales) lblSales.innerText = "🏦 ទំហំឥណទានបញ្ចេញ ($)";
+                if (lblCollect) lblCollect.innerText = "💵 ប្រមូលការប្រាក់/ប្រាក់ដើម ($)";
+                if (bankingFields) bankingFields.style.display = 'block';
+            } else {
+                if (lblSales) lblSales.innerText = "💰 ទំហំប្រាក់លក់/Sales ($)";
+                if (lblCollect) lblCollect.innerText = "💵 ប្រមូលប្រាក់លក់ ($)";
+                if (bankingFields) bankingFields.style.display = 'none';
+            }
+        }
+
+        /* DATA MANAGEMENT & SYNC */
+        let userId = tgUser ? tgUser.id.toString() : (localStorage.getItem('sales_user_uuid') || ('USER_' + Math.random().toString(36).substr(2, 9).toUpperCase()));
+        localStorage.setItem('sales_user_uuid', userId);
+
+        let customers = JSON.parse(localStorage.getItem('sales_customers')) || [];
+        let onlineItems = JSON.parse(localStorage.getItem('sales_online')) || [];
+        let manualContacts = JSON.parse(localStorage.getItem('sales_manual_contacts')) || [];
+        let appointments = JSON.parse(localStorage.getItem('sales_appoint')) || [];
+        let targetSettings = JSON.parse(localStorage.getItem('sales_targets')) || {
+            salesDaily: 500, salesMonthly: 15000,
+            collectDaily: 300, collectMonthly: 9000,
+            depositMonthly: 5000, parMonthly: 1.5
+        };
+
+        const syncChannel = new BroadcastChannel('sales_planner_sync_' + userId);
+
+        function saveAndSyncState() {
+            const dataState = {
+                customers, onlineItems, manualContacts, appointments, targetSettings,
+                activeMission: localStorage.getItem('sales_active_mission'),
+                missionHistory: localStorage.getItem('sales_mission_history')
+            };
+
+            syncChannel.postMessage(dataState);
+
+            if (tg && tg.CloudStorage) {
+                try { tg.CloudStorage.setItem('app_db_' + userId, JSON.stringify(dataState)); } catch (e) {}
+            }
+        }
+
+        syncChannel.onmessage = (event) => { if (event.data) applyDataState(event.data); };
+
+        function applyDataState(data) {
+            if (!data) return;
+            if (data.customers) { customers = data.customers; localStorage.setItem('sales_customers', JSON.stringify(customers)); }
+            if (data.onlineItems) { onlineItems = data.onlineItems; localStorage.setItem('sales_online', JSON.stringify(onlineItems)); }
+            if (data.manualContacts) { manualContacts = data.manualContacts; localStorage.setItem('sales_manual_contacts', JSON.stringify(manualContacts)); }
+            if (data.appointments) { appointments = data.appointments; localStorage.setItem('sales_appoint', JSON.stringify(appointments)); }
+            if (data.targetSettings) { targetSettings = data.targetSettings; localStorage.setItem('sales_targets', JSON.stringify(targetSettings)); }
+            if (data.activeMission) { localStorage.setItem('sales_active_mission', data.activeMission); }
+            if (data.missionHistory) { localStorage.setItem('sales_mission_history', data.missionHistory); }
+
+            refreshCurrentTabUI();
+        }
+
+        function refreshCurrentTabUI() {
+            loadAllContacts();
+            populateContactDropdowns();
+            loadCustomers();
+            loadOnlineItems();
+            loadAppointments();
+            renderTargetSummaryUI();
+            if (missionMap) {
+                renderSavedCustomerMarkers();
+                renderHistoricalRoutes();
+            }
+        }
+
+        /* MAPS & ROUTING */
+        let missionMap = null, watchId = null, currentMission = null, myLocationMarker = null;
+        let routePolylinesGroup = null, customerMarkersGroup = null;
+        let currentHeading = 0, currentRawAddress = '';
+        let osrmRouteCache = {};
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block'; btn.classList.add('active');
+            
+            if(tabId === 'contactTab') loadAllContacts();
+            if(tabId === 'visitTab' || tabId === 'onlineTab') populateContactDropdowns();
+            if(tabId === 'visitTab') loadCustomers();
+            if(tabId === 'onlineTab') loadOnlineItems();
+            if(tabId === 'appointTab') loadAppointments();
+            if(tabId === 'reportTab') { generateReport(); renderTargetSummaryUI(); loadTargetInputValues(); }
+            if(tabId === 'missionTab') {
+                if (!missionMap) initMissionMap();
+                else {
+                    setTimeout(() => { missionMap.invalidateSize(); }, 200);
+                    renderSavedCustomerMarkers();
+                    renderHistoricalRoutes();
+                }
+            }
+        }
+
+        function toggleForm(id) {
+            let f = document.getElementById(id);
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        const compassArrowSVG = `<svg width="36" height="36" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="16" fill="#2563eb" fill-opacity="0.25" stroke="#2563eb" stroke-width="1.5"/><polygon points="18,4 25,28 18,22 11,28" fill="#2563eb" stroke="#ffffff" stroke-width="1.5"/></svg>`;
+        const compassIcon = L.divIcon({ className: 'user-heading-marker', html: `<div id="headingArrowIcon" style="transform-origin: center center; width:36px; height:36px;">${compassArrowSVG}</div>`, iconSize: [36, 36], iconAnchor: [18, 18] });
+
+        function initMissionMap() {
+            if (missionMap) return;
+            try {
+                missionMap = L.map('missionMapContainer', { zoomControl: false, preferCanvas: true }).setView([11.5564, 104.9282], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, crossOrigin: true }).addTo(missionMap);
+                routePolylinesGroup = L.layerGroup().addTo(missionMap);
+                customerMarkersGroup = L.layerGroup().addTo(missionMap);
+                centerMissionMapToMyLocation();
+                renderSavedCustomerMarkers();
+                renderHistoricalRoutes();
+            } catch (err) {}
+        }
+
+        function centerMissionMapToMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                    if (missionMap) {
+                        missionMap.setView([lat, lng], 16);
+                        if (myLocationMarker) myLocationMarker.setLatLng([lat, lng]);
+                        else myLocationMarker = L.marker([lat, lng], { icon: compassIcon }).addTo(missionMap);
+                    }
+                });
+            }
+        }
+
+        function renderSavedCustomerMarkers() {
+            if (!missionMap || !customerMarkersGroup) return;
+            customerMarkersGroup.clearLayers();
+            getAllUniqueContacts().forEach(c => {
+                if (c.location && c.location.includes('q=')) {
+                    let parts = c.location.split('q=')[1].split(',');
+                    if (parts.length === 2) {
+                        let lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            L.marker([lat, lng]).addTo(customerMarkersGroup)
+                                .bindPopup(`<b>👤 ${c.name}</b><br>📍 ${c.address || 'គ្មានទីតាំង'}<br>📞 ${c.phone || ''}`);
+                        }
+                    }
+                }
+            });
+        }
+
+        async function fetchActualRoadRoute(points) {
+            if (!points || points.length < 2) return [];
+            let cacheKey = points.map(p => `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`).join(';');
+            if (osrmRouteCache[cacheKey]) return osrmRouteCache[cacheKey];
+
+            try {
+                let samplePoints = points;
+                if (points.length > 25) {
+                    samplePoints = [];
+                    let step = Math.ceil(points.length / 25);
+                    for (let i = 0; i < points.length; i += step) samplePoints.push(points[i]);
+                    if (samplePoints[samplePoints.length - 1] !== points[points.length - 1]) samplePoints.push(points[points.length - 1]);
+                }
+
+                let coordString = samplePoints.map(p => `${p.lng},${p.lat}`).join(';');
+                let res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`);
+                let data = await res.json();
+
+                if (data && data.routes && data.routes[0]) {
+                    let routeLatLngs = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                    osrmRouteCache[cacheKey] = routeLatLngs;
+                    return routeLatLngs;
+                }
+            } catch (err) {}
+            return points.map(p => [p.lat, p.lng]);
+        }
+
+        async function renderHistoricalRoutes() {
+            if (!missionMap || !routePolylinesGroup) return;
+            routePolylinesGroup.clearLayers();
+            let history = JSON.parse(localStorage.getItem('sales_mission_history')) || [];
+            let todayStr = new Date().toISOString().slice(0, 10);
+
+            let active = JSON.parse(localStorage.getItem('sales_active_mission'));
+            if (active && active.points && active.points.length > 1) {
+                let roadCoords = await fetchActualRoadRoute(active.points);
+                L.polyline(roadCoords, { color: '#dc2626', weight: 6, opacity: 0.9 }).addTo(routePolylinesGroup);
+            }
+
+            for (let m of history) {
+                if (m.points && m.points.length > 1) {
+                    let isToday = (m.date === todayStr);
+                    let roadCoords = await fetchActualRoadRoute(m.points);
+                    L.polyline(roadCoords, { color: isToday ? '#dc2626' : '#fca5a5', weight: isToday ? 5 : 3, opacity: isToday ? 0.85 : 0.6 }).addTo(routePolylinesGroup);
+                }
+            }
+        }
+
+        function startMission() {
+            if (!navigator.geolocation) return;
+            currentMission = { date: new Date().toISOString().slice(0, 10), startTime: new Date().toLocaleTimeString(), endTime: null, points: [] };
+            localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+            saveAndSyncState();
+
+            document.getElementById('btnStartMission').style.display = 'none';
+            document.getElementById('btnEndMission').style.display = 'block';
+            document.getElementById('missionStatusBox').innerText = "🟢 កំពុងកត់ត្រាបេសកកម្ម...";
+            startGeolocationWatch();
+        }
+
+        function startGeolocationWatch() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            watchId = navigator.geolocation.watchPosition((pos) => {
+                let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                if (!currentMission) return;
+                currentMission.points.push({ lat, lng, time: new Date().toISOString() });
+                localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+                saveAndSyncState();
+                if (myLocationMarker) myLocationMarker.setLatLng([lat, lng]);
+                renderHistoricalRoutes();
+            }, null, { enableHighAccuracy: true });
+        }
+
+        function endMission() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            if (currentMission) {
+                currentMission.endTime = new Date().toLocaleTimeString();
+                let history = JSON.parse(localStorage.getItem('sales_mission_history')) || [];
+                history.push(currentMission);
+                localStorage.setItem('sales_mission_history', JSON.stringify(history));
+                localStorage.removeItem('sales_active_mission');
+                saveAndSyncState();
+            }
+            document.getElementById('btnStartMission').style.display = 'block';
+            document.getElementById('btnEndMission').style.display = 'none';
+            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មបានបញ្ចប់!";
+            renderHistoricalRoutes();
+        }
+
+        /* VISIT & ONLINE DATA LOGIC WITH SALES/COLLECT AMOUNTS */
+        function saveCustomer() {
+            let name = document.getElementById('custName').value.trim();
+            if(!name) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
+            
+            let editIdx = parseInt(document.getElementById('editVisitIndex').value);
+            let item = { 
+                name, 
+                address: document.getElementById('custAddress').value, 
+                phone: document.getElementById('custPhone').value, 
+                salesAmount: parseFloat(document.getElementById('custSalesAmount').value || 0),
+                collectAmount: parseFloat(document.getElementById('custCollectAmount').value || 0),
+                interest: document.getElementById('custInterest').value,
+                reason: document.getElementById('custReason').value.trim(),
+                location: document.getElementById('custLocation').value,
+                date: new Date().toISOString().slice(0, 10)
+            };
+
+            if (editIdx === -1) customers.push(item);
+            else customers[editIdx] = item;
+
+            localStorage.setItem('sales_customers', JSON.stringify(customers));
+            saveAndSyncState();
+            resetVisitForm();
+            loadCustomers();
+        }
+
+        function loadCustomers() {
+            let c = document.getElementById('customerListContainer');
+            c.innerHTML = "";
+            let role = localStorage.getItem('sales_user_role_type') || 'SALES';
+
+            customers.forEach((item, i) => { 
+                let badge = getInterestBadgeHtml(item.interest);
+                let salesLabel = role === 'BANKING' ? '🏦 ឥណទាន' : '💰 លក់បាន';
+                let collectLabel = role === 'BANKING' ? '💵 ប្រមូលប្រាក់' : '💵 ប្រមូលលុយ';
+
+                c.innerHTML += `
+                    <div class="item-row-compact">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><b>${i+1}. ${item.name}</b> (${item.phone || 'គ្មានលេខ'}) ${badge}</span>
+                        </div>
+                        <div><small style="color:#475569;">📍 ${item.address || 'គ្មានទីតាំង'}</small></div>
+                        <div style="font-weight:bold; color:#16a34a; font-size:11px; margin-top:2px;">
+                            ${salesLabel}: $${(item.salesAmount || 0).toLocaleString()} | ${collectLabel}: $${(item.collectAmount || 0).toLocaleString()}
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn btn-orange btn-sm" onclick="editCustomer(${i})">✏️ កែប្រែ</button>
+                            <button class="btn btn-red btn-sm" onclick="deleteCustomer(${i})">🗑️ លុប</button>
+                        </div>
+                    </div>`; 
+            });
+        }
+
+        function saveOnlineItem() {
+            let custName = document.getElementById('onlineCustName').value.trim();
+            if(!custName) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
+            
+            let editIdx = parseInt(document.getElementById('editOnlineIndex').value);
+            let item = { 
+                custName, 
+                custAddress: document.getElementById('onlineCustAddress').value, 
+                name: document.getElementById('onlineItemName').value,
+                salesAmount: parseFloat(document.getElementById('onlineSalesAmount').value || 0),
+                collectAmount: parseFloat(document.getElementById('onlineCollectAmount').value || 0),
+                interest: document.getElementById('onlineInterest').value,
+                reason: document.getElementById('onlineReason').value.trim(),
+                date: new Date().toISOString().slice(0, 10)
+            };
+
+            if (editIdx === -1) onlineItems.push(item);
+            else onlineItems[editIdx] = item;
+
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+            saveAndSyncState();
+            resetOnlineForm();
+            loadOnlineItems();
+        }
+
+        function loadOnlineItems() {
+            let c = document.getElementById('onlineItemListContainer');
+            c.innerHTML = "";
+            let role = localStorage.getItem('sales_user_role_type') || 'SALES';
+
+            onlineItems.forEach((item, i) => { 
+                let badge = getInterestBadgeHtml(item.interest);
+                c.innerHTML += `
+                    <div class="item-row-compact">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span><b>${i+1}. ${item.custName}</b> - ${item.name} ${badge}</span>
+                        </div>
+                        <div style="font-weight:bold; color:#16a34a; font-size:11px; margin-top:2px;">
+                            💰 លក់/ឥណទាន: $${(item.salesAmount || 0).toLocaleString()} | 💵 ប្រមូលបាន: $${(item.collectAmount || 0).toLocaleString()}
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn btn-orange btn-sm" onclick="editOnlineItem(${i})">✏️ កែប្រែ</button>
+                            <button class="btn btn-red btn-sm" onclick="deleteOnlineItem(${i})">🗑️ លុប</button>
+                        </div>
+                    </div>`; 
+            });
+        }
+
+        /* TARGET & REPORT MANAGEMENT (CONDITION 1, 2, 3) */
+        function loadTargetInputValues() {
+            document.getElementById('targetSalesDailyInput').value = targetSettings.salesDaily || 0;
+            document.getElementById('targetSalesMonthlyInput').value = targetSettings.salesMonthly || 0;
+            document.getElementById('targetCollectDailyInput').value = targetSettings.collectDaily || 0;
+            document.getElementById('targetCollectMonthlyInput').value = targetSettings.collectMonthly || 0;
+            document.getElementById('targetDepositMonthlyInput').value = targetSettings.depositMonthly || 0;
+            document.getElementById('targetParMonthlyInput').value = targetSettings.parMonthly || 1.5;
+        }
+
+        function saveTargetSettings() {
+            targetSettings = {
+                salesDaily: parseFloat(document.getElementById('targetSalesDailyInput').value || 0),
+                salesMonthly: parseFloat(document.getElementById('targetSalesMonthlyInput').value || 0),
+                collectDaily: parseFloat(document.getElementById('targetCollectDailyInput').value || 0),
+                collectMonthly: parseFloat(document.getElementById('targetCollectMonthlyInput').value || 0),
+                depositMonthly: parseFloat(document.getElementById('targetDepositMonthlyInput').value || 0),
+                parMonthly: parseFloat(document.getElementById('targetParMonthlyInput').value || 1.5)
+            };
+
+            localStorage.setItem('sales_targets', JSON.stringify(targetSettings));
+            saveAndSyncState();
+            toggleForm('targetConfigForm');
+            renderTargetSummaryUI();
+            generateReport();
+            alert("✅ បានរក្សាទុកការកំណត់ Target រួចរាល់!");
+        }
+
+        function calculateActualSums() {
+            let todayStr = new Date().toISOString().slice(0, 10);
+            let currentMonthStr = new Date().toISOString().slice(0, 7);
+
+            let todaySales = 0, todayCollect = 0;
+            let monthSales = 0, monthCollect = 0;
+
+            customers.forEach(c => {
+                let itemDate = c.date || todayStr;
+                if (itemDate === todayStr) {
+                    todaySales += (c.salesAmount || 0);
+                    todayCollect += (c.collectAmount || 0);
+                }
+                if (itemDate.startsWith(currentMonthStr)) {
+                    monthSales += (c.salesAmount || 0);
+                    monthCollect += (c.collectAmount || 0);
+                }
+            });
+
+            onlineItems.forEach(o => {
+                let itemDate = o.date || todayStr;
+                if (itemDate === todayStr) {
+                    todaySales += (o.salesAmount || 0);
+                    todayCollect += (o.collectAmount || 0);
+                }
+                if (itemDate.startsWith(currentMonthStr)) {
+                    monthSales += (o.salesAmount || 0);
+                    monthCollect += (o.collectAmount || 0);
+                }
+            });
+
+            return { todaySales, todayCollect, monthSales, monthCollect };
+        }
+
+        function renderTargetSummaryUI() {
+            let actuals = calculateActualSums();
+            let role = localStorage.getItem('sales_user_role_type') || 'SALES';
+
+            let salesPctDaily = targetSettings.salesDaily > 0 ? Math.round((actuals.todaySales / targetSettings.salesDaily) * 100) : 0;
+            let salesPctMonthly = targetSettings.salesMonthly > 0 ? Math.round((actuals.monthSales / targetSettings.salesMonthly) * 100) : 0;
+            let collectPctDaily = targetSettings.collectDaily > 0 ? Math.round((actuals.todayCollect / targetSettings.collectDaily) * 100) : 0;
+            let collectPctMonthly = targetSettings.collectMonthly > 0 ? Math.round((actuals.monthCollect / targetSettings.collectMonthly) * 100) : 0;
+
+            let titleSales = role === 'BANKING' ? 'ឥណទានបញ្ចេញ' : 'ការលក់';
+            let titleCollect = role === 'BANKING' ? 'ប្រមូលប្រាក់ដើម/ការប្រាក់' : 'ប្រមូលប្រាក់លក់';
+
+            let html = `
+                <div style="font-weight:bold; color:#0369a1; margin-bottom:4px;">📊 សង្ខេប Target ធៀបនឹងសមិទ្ធផលពិត៖</div>
+                <b>• ${titleSales} ប្រចាំថ្ងៃ:</b> $${actuals.todaySales.toLocaleString()} / $${targetSettings.salesDaily.toLocaleString()} (${salesPctDaily}%)<br>
+                <b>• ${titleSales} ប្រចាំខែ:</b> $${actuals.monthSales.toLocaleString()} / $${targetSettings.salesMonthly.toLocaleString()} (${salesPctMonthly}%)<br>
+                <b>• ${titleCollect} ប្រចាំថ្ងៃ:</b> $${actuals.todayCollect.toLocaleString()} / $${targetSettings.collectDaily.toLocaleString()} (${collectPctDaily}%)<br>
+                <b>• ${titleCollect} ប្រចាំខែ:</b> $${actuals.monthCollect.toLocaleString()} / $${targetSettings.collectMonthly.toLocaleString()} (${collectPctMonthly}%)
+            `;
+
+            if (role === 'BANKING') {
+                html += `<br><b>• Target ស្វែងរកប្រាក់ផ្ញើ (Deposit):</b> $${(targetSettings.depositMonthly || 0).toLocaleString()} | <b>PAR Control:</b> < ${targetSettings.parMonthly}%`;
+            }
+
+            document.getElementById('targetSummaryDisplay').innerHTML = html;
+        }
+
+        function getFormattedReportText() {
+            let today = new Date().toLocaleDateString('km-KH');
+            let actuals = calculateActualSums();
+            let role = localStorage.getItem('sales_user_role_type') || 'SALES';
+            let roleName = role === 'BANKING' ? 'បុគ្គលិក ធនាគារ/មីក្រូហិរញ្ញ' : 'បុគ្គលិកលក់ (Sales Officer)';
+
+            let totalContacts = getAllUniqueContacts().length;
+            let interestedCount = 0, notInterestedCount = 0, thinkingCount = 0;
+
+            customers.forEach(c => {
+                if (c.interest === 'INTERESTED') interestedCount++;
+                else if (c.interest === 'NOT_INTERESTED') notInterestedCount++;
+                else if (c.interest === 'THINKING') thinkingCount++;
+            });
+
+            onlineItems.forEach(o => {
+                if (o.interest === 'INTERESTED') interestedCount++;
+                else if (o.interest === 'NOT_INTERESTED') notInterestedCount++;
+                else if (o.interest === 'THINKING') thinkingCount++;
+            });
+
+            let salesTitle = role === 'BANKING' ? 'ឥណទានបញ្ចេញ' : 'ការលក់';
+            let collectTitle = role === 'BANKING' ? 'ប្រមូលប្រាក់' : 'ប្រមូលលុយ';
+
+            return `📊 **របាយការណ៍លទ្ធផលការងារ & សមិទ្ធផលលក់/ប្រមូលលុយ** [${today}]\n` +
+                `------------------------------------\n` +
+                `👤 អ្នករៀបចំ: ${localStorage.getItem('sales_user_display_name') || 'N/A'} (${roleName})\n` +
+                `👥 អតិថិជនសរុបក្នុងប្រព័ន្ធ: ${totalContacts} នាក់\n` +
+                `📍 ជួបផ្ទាល់: ${customers.length} នាក់ | 💻 អនឡាញ: ${onlineItems.length} នាក់ | 📅 ណាត់ជួប: ${appointments.length} នាក់\n\n` +
+                `💰 **សមិទ្ធផលលក់ & ប្រមូលប្រាក់ជាក់ស្តែង៖**\n` +
+                `• ${salesTitle} ថ្ងៃនេះ: $${actuals.todaySales.toLocaleString()} / Target: $${targetSettings.salesDaily.toLocaleString()}\n` +
+                `• ${salesTitle} ខែនេះ: $${actuals.monthSales.toLocaleString()} / Target: $${targetSettings.salesMonthly.toLocaleString()}\n` +
+                `• ${collectTitle} ថ្ងៃនេះ: $${actuals.todayCollect.toLocaleString()} / Target: $${targetSettings.collectDaily.toLocaleString()}\n` +
+                `• ${collectTitle} ខែនេះ: $${actuals.monthCollect.toLocaleString()} / Target: $${targetSettings.collectMonthly.toLocaleString()}\n\n` +
+                `🎯 **សង្ខេបកម្រិតចាប់អារម្មណ៍ (របាយការណ៍ចាស់)៖**\n` +
+                `✅ ចាប់អារម្មណ៍: ${interestedCount} នាក់ | ⏳ កំពុងគិតគូរ: ${thinkingCount} នាក់ | ❌ មិនចាប់អារម្មណ៍: ${notInterestedCount} នាក់`;
+        }
+
+        function generateReport() {
+            document.getElementById('reportSummaryBox').innerText = getFormattedReportText();
+        }
+
+        function shareReportTextToTelegram() {
+            let text = getFormattedReportText();
+            let shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://t.me')}&text=${encodeURIComponent(text)}`;
+            if (tg && tg.openTelegramLink) tg.openTelegramLink(shareUrl);
+            else window.open(shareUrl, '_blank');
+        }
+
+        /* CONTACT & HELPER FUNCTIONS */
+        function getAllUniqueContacts() {
+            let list = [];
+            customers.forEach((c, i) => list.push({ name: c.name, phone: c.phone || '', address: c.address || '', location: c.location || '' }));
+            onlineItems.forEach((o, i) => list.push({ name: o.custName, phone: '', address: o.custAddress || '', location: '' }));
+            manualContacts.forEach((m, i) => list.push({ name: m.name, phone: m.info || '', address: m.address || '', location: m.location || '' }));
+            return list;
+        }
+
+        function populateContactDropdowns() {
+            let contacts = getAllUniqueContacts();
+            let options = '<option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>';
+            contacts.forEach((c, idx) => { options += `<option value="${idx}">${c.name} ${c.phone ? '('+c.phone+')' : ''} - ${c.address || 'គ្មានទីតាំង'}</option>`; });
+            document.getElementById('selectContactVisit').innerHTML = options;
+            document.getElementById('selectContactOnline').innerHTML = options;
+        }
+
+        function autoFillContact(type) {
+            let contacts = getAllUniqueContacts();
+            let idx = document.getElementById(type === 'visit' ? 'selectContactVisit' : 'selectContactOnline').value;
+            if(idx !== '') {
+                let c = contacts[idx];
+                if(type === 'visit') {
+                    document.getElementById('custName').value = c.name;
+                    document.getElementById('custPhone').value = c.phone;
+                    document.getElementById('custAddress').value = c.address;
+                    document.getElementById('custLocation').value = c.location;
+                } else {
+                    document.getElementById('onlineCustName').value = c.name;
+                    document.getElementById('onlineCustAddress').value = c.address;
+                }
+            }
+        }
+
+        function resetVisitForm() {
+            document.getElementById('custName').value = '';
+            document.getElementById('custAddress').value = '';
+            document.getElementById('custPhone').value = '';
+            document.getElementById('custSalesAmount').value = '0';
+            document.getElementById('custCollectAmount').value = '0';
+            document.getElementById('custReason').value = '';
+            document.getElementById('custLocation').value = '';
+            toggleForm('visitForm');
+        }
+
+        function resetOnlineForm() {
+            document.getElementById('onlineCustName').value = '';
+            document.getElementById('onlineCustAddress').value = '';
+            document.getElementById('onlineItemName').value = '';
+            document.getElementById('onlineSalesAmount').value = '0';
+            document.getElementById('onlineCollectAmount').value = '0';
+            document.getElementById('onlineReason').value = '';
+            toggleForm('onlineForm');
+        }
+
+        function getInterestBadgeHtml(status) {
+            if (status === 'INTERESTED') return `<span class="badge-status bg-interested">✅ ចាប់អារម្មណ៍</span>`;
+            if (status === 'NOT_INTERESTED') return `<span class="badge-status bg-not-interested">❌ មិនចាប់អារម្មណ៍</span>`;
+            if (status === 'THINKING') return `<span class="badge-status bg-thinking">⏳ កំពុងគិតគូរ</span>`;
+            return '';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateProfileDisplay();
+            applyRoleFormLabels();
+            checkFirstTimeUser();
+            loadAllContacts();
+            initMissionMap();
+            renderTargetSummaryUI();
+        });
+    </script>
+</body>
+</html>
