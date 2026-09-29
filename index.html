@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sales Planner Pro</title>
+    
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #f4f6f9; margin: 0; padding: 0; color: #333; }
+        .hidden { display: none !important; }
+
+        /* ១. ស្ទីលទំព័រកិច្ចព្រមព្រៀង */
+        #termsPage { padding: 25px 20px; min-height: 100vh; background: #ffffff; display: flex; flex-direction: column; justify-content: space-between; }
+        .logo-area { text-align: center; margin-top: 20px; }
+        .logo-title { font-size: 24px; font-weight: bold; color: #1e293b; margin-top: 10px; }
+        .terms-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; font-size: 13px; color: #475569; line-height: 1.6; margin: 20px 0; }
+        .agree-btn { width: 100%; background: #16a34a; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); }
+
+        /* ២. ស្ទីលទំព័រ ចុចចាប់ផ្តើម (Start Screen) */
+        #startPage { padding: 30px 20px; min-height: 100vh; background: #ffffff; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .start-btn { width: 100%; max-width: 300px; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 50px; font-size: 18px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35); margin-top: 30px; }
+        .start-btn:active { transform: scale(0.96); background: #1d4ed8; }
+
+        /* ៣. ស្ទីលទំព័រមេ (Main Dashboard & Menu) */
+        #mainPage { padding: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .lang-switch { display: flex; gap: 6px; }
+        .lang-btn { background: white; border: 1px solid #ddd; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 16px; }
+
+        .card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .menu-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        
+        .menu-card { display: flex; align-items: center; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; cursor: pointer; }
+        .menu-card:active { background: #e2e8f0; }
+        .menu-icon { font-size: 28px; margin-right: 15px; }
+        .menu-info h3 { margin: 0; font-size: 16px; color: #1e293b; }
+        .menu-info p { margin: 3px 0 0 0; font-size: 12px; color: #64748b; }
+
+        .status-bar { text-align: center; font-size: 12px; color: #16a34a; font-weight: bold; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================== -->
+    <!-- វគ្គទី ១៖ កិច្ចព្រមព្រៀង & ភ្ជាប់ Telegram -->
+    <!-- ========================================== -->
+    <div id="termsPage">
+        <div class="logo-area">
+            <div style="font-size: 50px;">🎯</div>
+            <div class="logo-title">Sales Planner Pro</div>
+            <p style="color: #64748b; font-size: 14px;">កម្មវិធីគ្រប់គ្រង និងរៀបចំផែនការលក់</p>
+        </div>
+
+        <div>
+            <h3 style="margin-bottom: 8px; color: #1e293b;" data-i18n="termsTitle">📜 កិច្ចព្រមព្រៀងប្រើប្រាស់</h3>
+            <div class="terms-card">
+                <p style="margin-top:0;" data-i18n="termsText">សូមអាន និងយល់ព្រមលើលក្ខខណ្ឌមុននឹងចូលប្រើប្រាស់៖</p>
+                <ul style="padding-left: 18px; margin-bottom:0;">
+                    <li data-i18n="term1">ទិន្នន័យទីតាំង Map និងរបាយការណ៍ត្រូវបានរក្សាទុកដោយសុវត្ថិភាព។</li>
+                    <li data-i18n="term2">តម្រូវឱ្យភ្ជាប់ Telegram Account ដើម្បី Sync ទិន្នន័យ។</li>
+                    <li data-i18n="term3">សាកល្បងប្រើប្រាស់ Free ៣០ ថ្ងៃដំបូង។</li>
+                </ul>
+            </div>
+        </div>
+
+        <button class="agree-btn" onclick="acceptTerms()" data-i18n="agreeBtn">✅ យល់ព្រម និងភ្ជាប់ Telegram</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- វគ្គទី ២៖ ទំព័រ ចុចចាប់ផ្តើម (Start Screen) -->
+    <!-- ========================================== -->
+    <div id="startPage" class="hidden">
+        <div style="font-size: 65px;">🚀</div>
+        <h2 style="margin: 15px 0 5px 0; color: #1e293b;" data-i18n="readyTitle">ប្រព័ន្ធត្រៀមរួចរាល់!</h2>
+        <p style="color: #64748b; font-size: 14px; margin: 0;" data-i18n="readySub">ចុចប៊ូតុងខាងក្រោមដើម្បីចាប់ផ្តើមបេសកកម្ម</p>
+        
+        <button class="start-btn" onclick="startApp()" data-i18n="startBtn">▶️ ចុចចាប់ផ្តើម (Start)</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- វគ្គទី ៣៖ ទំព័រមេ (បេសកកម្ម & Menu ផ្សេងៗ) -->
+    <!-- ========================================== -->
+    <div id="mainPage" class="hidden">
+        
+        <!-- Header ខាងលើ -->
+        <div class="header">
+            <div style="font-size: 14px; font-weight: bold; color: #334155;">
+                👤 <span id="userName">User</span>
+            </div>
+            <!-- ប៊ូតុងប្តូរ ៣ ភាសា (ខ្មែរ អង់គ្លេស ចិន) -->
+            <div class="lang-switch">
+                <button class="lang-btn" onclick="changeLanguage('km')">🇰🇭</button>
+                <button class="lang-btn" onclick="changeLanguage('en')">🇬🇧</button>
+                <button class="lang-btn" onclick="changeLanguage('zh')">🇨🇳</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 style="margin:0; font-size:20px;" data-i18n="dashboardTitle">ផ្ទាំងគ្រប់គ្រងការលក់</h2>
+            <p style="margin: 5px 0 15px 0; font-size:13px; color:#64748b;" data-i18n="dashboardSub">ជ្រើសរើសមុខងារដើម្បីដំណើរការ</p>
+
+            <!-- បញ្ជី Menu ទាំងអស់ (បេសកកម្ម, Map, បញ្ជីអតិថិជន) -->
+            <div class="menu-grid">
+                
+                <!-- ១. បេសកកម្ម (Mission Tracker) -->
+                <div class="menu-card" style="border-left: 5px solid #2563eb;" onclick="openSection('mission')">
+                    <div class="menu-icon">🚀</div>
+                    <div class="menu-info">
+                        <h3 data-i18n="m1Title">កត់ត្រាបេសកកម្ម (Mission)</h3>
+                        <p data-i18n="m1Sub">កត់ត្រាចម្ងាយផ្លូវ real-time & ត្រីវិស័យ</p>
+                    </div>
+                </div>
+
+                <!-- ២. ទីតាំងអតិថិជនលើ Map -->
+                <div class="menu-card" style="border-left: 5px solid #059669;" onclick="openSection('map')">
+                    <div class="menu-icon">📍</div>
+                    <div class="menu-info">
+                        <h3 data-i18n="m2Title">ទីតាំងអតិថិជន (Map PIN)</h3>
+                        <p data-i18n="m2Sub">បង្ហាញ និងចាត់ក្រុមអតិថិជនតាមភូមិ/ផ្លូវ</p>
+                    </div>
+                </div>
+
+                <!-- ៣. របាយការណ៍សង្ខេប -->
+                <div class="menu-card" style="border-left: 5px solid #d97706;" onclick="openSection('report')">
+                    <div class="menu-icon">📅</div>
+                    <div class="menu-info">
+                        <h3 data-i18n="m3Title">របាយការណ៍ & ការណាត់ជួប</h3>
+                        <p data-i18n="m3Sub">គ្រប់គ្រងកាលវិភាគ និងរបាយការណ៍លក់</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="status-bar" data-i18n="syncStatus">🟢 បានភ្ជាប់ Telegram រួចរាល់</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- Script បញ្ជាការងារទូទៅ -->
+    <!-- ========================================== -->
+    <script>
+        // 1. ប្រព័ន្ធ ៣ ភាសា (ខ្មែរ, អង់គ្លេស, ចិន)
+        const i18n = {
+            km: {
+                termsTitle: "📜 កិច្ចព្រមព្រៀងប្រើប្រាស់",
+                termsText: "សូមអាន និងយល់ព្រមលើលក្ខខណ្ឌមុននឹងចូលប្រើប្រាស់៖",
+                term1: "ទិន្នន័យទីតាំង Map និងរបាយការណ៍ត្រូវបានរក្សាទុកដោយសុវត្ថិភាព។",
+                term2: "តម្រូវឱ្យភ្ជាប់ Telegram Account ដើម្បី Sync ទិន្នន័យ។",
+                term3: "សាកល្បងប្រើប្រាស់ Free ៣០ ថ្ងៃដំបូង។",
+                agreeBtn: "✅ យល់ព្រម និងភ្ជាប់ Telegram",
+                readyTitle: "ប្រព័ន្ធត្រៀមរួចរាល់!",
+                readySub: "ចុចប៊ូតុងខាងក្រោមដើម្បីចាប់ផ្តើមបេសកកម្ម",
+                startBtn: "▶️ ចុចចាប់ផ្តើម (Start)",
+                dashboardTitle: "ផ្ទាំងគ្រប់គ្រងការលក់",
+                dashboardSub: "ជ្រើសរើសមុខងារដើម្បីដំណើរការ",
+                m1Title: "កត់ត្រាបេសកកម្ម (Mission)",
+                m1Sub: "កត់ត្រាចម្ងាយផ្លូវ real-time & ត្រីវិស័យ",
+                m2Title: "ទីតាំងអតិថិជន (Map PIN)",
+                m2Sub: "បង្ហាញ និងចាត់ក្រុមអតិថិជនតាមភូមិ/ផ្លូវ",
+                m3Title: "របាយការណ៍ & ការណាត់ជួប",
+                m3Sub: "គ្រប់គ្រងកាលវិភាគ និងរបាយការណ៍លក់",
+                syncStatus: "🟢 បានភ្ជាប់ Telegram រួចរាល់"
+            },
+            en: {
+                termsTitle: "📜 Terms of Service",
+                termsText: "Please read and accept terms before entry:",
+                term1: "Location & report data are stored securely.",
+                term2: "Requires Telegram Account for data syncing.",
+                term3: "Includes 30 days Free Trial.",
+                agreeBtn: "✅ Agree & Connect Telegram",
+                readyTitle: "System Ready!",
+                readySub: "Click the button below to start mission",
+                startBtn: "▶️ Start Mission",
+                dashboardTitle: "Sales Dashboard",
+                dashboardSub: "Select a feature to operate",
+                m1Title: "Mission Tracker",
+                m1Sub: "Real-time route tracking & compass sensor",
+                m2Title: "Customer Locations (Map PIN)",
+                m2Sub: "View & group customers by village/street",
+                m3Title: "Reports & Appointments",
+                m3Sub: "Manage schedules & sales reports",
+                syncStatus: "🟢 Connected to Telegram"
+            },
+            zh: {
+                termsTitle: "📜 服务条款",
+                termsText: "进入应用前请阅读并同意以下条款：",
+                term1: "位置和报告数据均已安全加密存储。",
+                term2: "需要连接 Telegram 账号以同步数据。",
+                term3: "包含 30 天免费试用期。",
+                agreeBtn: "✅ 同意并连接 Telegram",
+                readyTitle: "系统准备就绪！",
+                readySub: "点击下方按钮开始任务",
+                startBtn: "▶️ 点击开始 (Start)",
+                dashboardTitle: "销售管理控制台",
+                dashboardSub: "请选择一项功能开始操作",
+                m1Title: "行程跟踪 (Mission)",
+                m1Sub: "实时路线记录与指南针传感器",
+                m2Title: "客户位置 (Map PIN)",
+                m2Sub: "按村庄/街道查看和分组客户",
+                m3Title: "销售报告与预约",
+                m3Sub: "管理日程安排与销售总结报告",
+                syncStatus: "🟢 已连接至 Telegram"
+            }
+        };
+
+        let currentLang = localStorage.getItem('app_lang') || 'km';
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('app_lang', lang);
+            const t = i18n[lang] || i18n.km;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+        }
+
+        // 2. Telegram WebApp Integration
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            document.getElementById('userName').innerText = tg.initDataUnsafe.user.first_name;
+        }
+
+        // ពិនិត្យមើលលំហូរទំព័រពេលបើក App
+        if (localStorage.getItem('hasAcceptedTerms') === 'true') {
+            document.getElementById('termsPage').classList.add('hidden');
+            document.getElementById('startPage').classList.remove('hidden');
+        }
+
+        // ៣. ពេលចុច "✅ យល់ព្រម និងភ្ជាប់ Telegram"
+        function acceptTerms() {
+            localStorage.setItem('hasAcceptedTerms', 'true');
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            
+            document.getElementById('termsPage').classList.add('hidden');
+            document.getElementById('startPage').classList.remove('hidden');
+            changeLanguage(currentLang);
+        }
+
+        // ៤. ពេលចុច "▶️ ចុចចាប់ផ្តើម (Start)"
+        function startApp() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+            
+            document.getElementById('startPage').classList.add('hidden');
+            document.getElementById('mainPage').classList.remove('hidden');
+            changeLanguage(currentLang);
+        }
+
+        // ៥. មុខងារចុចលើ Menu នីមួយៗ
+        function openSection(name) {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            console.log("Opening section:", name);
+            // ភ្ជាប់ទៅកាន់មុខងារជាក់ស្តែងរបស់បងនៅត្រង់នេះ
+        }
+
+        changeLanguage(currentLang);
+    </script>
+</body>
+</html>
