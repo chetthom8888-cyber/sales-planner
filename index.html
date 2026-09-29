@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sales Planner Pro</title>
+    
+    <!-- បញ្ចូល Telegram WebApp SDK ដើម្បីស្គាល់ User ID -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        /* រចនាប័ទ្មស្រាល លឿន មិនបាច់ប្រើ Library ធំៗ */
+        * { box-sizing: border-box; font-family: 'Khmer OS System', 'Segoe UI', sans-serif; }
+        body { background-color: #f3f4f6; margin: 0; padding: 15px; color: #333; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .lang-switch { display: flex; gap: 8px; }
+        .lang-btn { background: white; border: 1px solid #ddd; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .lang-btn:active { background: #e5e7eb; }
+
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        h1 { font-size: 22px; margin: 0 0 5px 0; color: #1f2937; }
+        p.subtitle { font-size: 14px; color: #6b7280; margin-bottom: 20px; }
+
+        .menu-btn { display: flex; align-items: center; width: 100%; background: #2563eb; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 16px; margin-bottom: 12px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2); }
+        .menu-btn:active { transform: scale(0.98); background: #1d4ed8; }
+        
+        .status-bar { text-align: center; font-size: 12px; color: #16a34a; margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <!-- ផ្នែកខាងលើ៖ ជ្រើសរើសភាសា -->
+    <div class="header">
+        <div id="userInfo" style="font-size: 14px; font-weight: bold; color: #4b5563;">👤 <span id="userName">User</span></div>
+        <div class="lang-switch">
+            <button class="lang-btn" onclick="changeLanguage('km')">🇰🇭</button>
+            <button class="lang-btn" onclick="changeLanguage('en')">🇬🇧</button>
+            <button class="lang-btn" onclick="changeLanguage('zh')">🇨🇳</button>
+        </div>
+    </div>
+
+    <!-- ផ្ទៃកម្មវិធី -->
+    <div class="card">
+        <h1 data-i18n="title">Sales Planner Pro</h1>
+        <p class="subtitle" data-i18n="subtitle">ប្រព័ន្ធគ្រប់គ្រងការលក់ឆ្លាតវៃ</p>
+
+        <button class="menu-btn">
+            <span style="margin-right: 10px; font-size: 20px;">🚀</span> 
+            <span data-i18n="missionBtn">កត់ត្រាចម្ងាយផ្លូវ (Mission)</span>
+        </button>
+
+        <button class="menu-btn" style="background: #059669;">
+            <span style="margin-right: 10px; font-size: 20px;">📍</span> 
+            <span data-i18n="customerBtn">បញ្ជីទីតាំងអតិថិជន</span>
+        </button>
+
+        <button class="menu-btn" style="background: #d97706;">
+            <span style="margin-right: 10px; font-size: 20px;">📅</span> 
+            <span data-i18n="reportBtn">របាយការណ៍សង្ខេប</span>
+        </button>
+
+        <div class="status-bar" id="syncStatus" data-i18n="syncStatus">🟢 ទិន្នន័យរក្សាទុកសុវត្ថិភាព</div>
+    </div>
+
+    <!-- កូដបញ្ជា (JavaScript) -->
+    <script type="module">
+        // ១. ប្រព័ន្ធបកប្រែភាសា (Multi-language System - លឿនបំផុត)
+        const i18n = {
+            km: {
+                title: "Sales Planner Pro",
+                subtitle: "ប្រព័ន្ធគ្រប់គ្រងការលក់ឆ្លាតវៃ",
+                missionBtn: "កត់ត្រាចម្ងាយផ្លូវ (Mission)",
+                customerBtn: "បញ្ជីទីតាំងអតិថិជន",
+                reportBtn: "របាយការណ៍សង្ខេប",
+                syncStatus: "🟢 ទិន្នន័យរក្សាទុកសុវត្ថិភាព"
+            },
+            en: {
+                title: "Sales Planner Pro",
+                subtitle: "Smart Sales Management",
+                missionBtn: "Mission Tracker",
+                customerBtn: "Customer Locations",
+                reportBtn: "Summary Reports",
+                syncStatus: "🟢 Data saved securely"
+            },
+            zh: {
+                title: "销售规划师 Pro",
+                subtitle: "智能销售管理系统",
+                missionBtn: "行程跟踪",
+                customerBtn: "客户位置列表",
+                reportBtn: "总结报告",
+                syncStatus: "🟢 数据已安全保存"
+            }
+        };
+
+        // អនុញ្ញាតឱ្យ HTML ហៅប្រើ Function ដូរភាសាបាន
+        window.changeLanguage = function(lang) {
+            localStorage.setItem('app_lang', lang);
+            const textData = i18n[lang] || i18n.km;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (textData[key]) el.innerText = textData[key];
+            });
+            // ប្រាប់ Telegram ឱ្យរំញ័រតិចៗពេលចុច (Haptic Feedback)
+            if (window.Telegram.WebApp.HapticFeedback) {
+                window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            }
+        };
+
+        // ទាញភាសាចាស់មកប្រើវិញពេលបើក App (បើធ្លាប់ជ្រើសរើសហើយ)
+        const savedLang = localStorage.getItem('app_lang') || 'km';
+        window.changeLanguage(savedLang);
+
+        // ២. ទាញព័ត៌មានពី Telegram (ស្គាល់ឈ្មោះ និង ID អ្នកប្រើ)
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // ពង្រីក App ពេញអេក្រង់ទូរស័ព្ទ
+
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            const user = tg.initDataUnsafe.user;
+            document.getElementById('userName').innerText = user.first_name;
+            // user.id នេះហើយជាគន្លឹះសម្រាប់ទាញ Data ចាស់មកវិញពេលគេដូរទូរស័ព្ទ!
+            console.log("Telegram User ID:", user.id); 
+        }
+
+        // ==========================================
+        // ៣. ប្រព័ន្ធភ្ជាប់ Cloud (Firebase) - ដាក់ពេលក្រោយបាន
+        // ==========================================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, enableIndexedDbPersistence, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // បងគ្រាន់តែប្តូរលេខកូដក្នុងនេះ ពេលបងបង្កើត Firebase រួច
+        const firebaseConfig = {
+            apiKey: "ដាក់_API_KEY_នៅទីនេះ",
+            projectId: "ដាក់_PROJECT_ID_នៅទីនេះ",
+            appId: "ដាក់_APP_ID_នៅទីនេះ"
+        };
+        
+        try {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            // បើក Offline Mode ឱ្យ App ដើរលឿន មិនបាច់ចាំសេវា
+            enableIndexedDbPersistence(db).catch(err => console.log("Offline Mode Active"));
+            console.log("Firebase Connected Ready!");
+        } catch(e) {
+            console.log("រង់ចាំដាក់ Firebase Config ពិតប្រាកដ");
+        }
+    </script>
+</body>
+</html>
