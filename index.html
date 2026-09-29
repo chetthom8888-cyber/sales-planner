@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sales Planner Pro</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Library សម្រាប់ Capture អេក្រង់ Map ជារូបភាព -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #020617;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #020617;
+            --red: #dc2626;
+            --green: #16a34a;
+            --orange: #ea580c;
+            --border: #cbd5e1;
+        }
+
+        /* ជំនួសពណ៌ពេល Highlight/Select និង Copy អក្សរឱ្យចេញពណ៌ខ្មៅ */
+        ::selection {
+            background-color: #020617 !important;
+            color: #ffffff !important;
+        }
+        ::-moz-selection {
+            background-color: #020617 !important;
+            color: #ffffff !important;
+        }
+
+        html, body {
+            background-color: var(--bg) !important;
+            color: var(--text) !important;
+            font-family: 'Battambang', Arial, sans-serif;
+            margin: 0; padding: 0;
+            font-size: 13px;
+            min-height: 100vh;
+        }
+
+        .top-banner {
+            background: #020617; color: #ffffff !important;
+            padding: 14px 16px; text-align: center;
+            font-size: 15px; font-weight: bold;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .nav-tabs {
+            display: flex; background: #ffffff;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px 6px;
+            text-align: center; font-size: 12px; font-weight: 700;
+            background: #ffffff; border: none; cursor: pointer;
+            color: #475569; border-bottom: 3px solid transparent; white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: var(--accent); border-bottom-color: var(--accent); background: #bae6fd;
+        }
+
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        .card {
+            background: var(--card-bg); border-radius: 12px;
+            padding: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08); border: 1.5px solid var(--border);
+            color: var(--text);
+        }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h3 { font-size: 14px; color: var(--primary); margin: 0; font-weight: 700; border-left: 4px solid var(--accent); padding-left: 8px; }
+
+        .btn {
+            background-color: var(--green); color: white !important; border: 1px solid var(--border);
+            padding: 10px 12px; width: 100%; border-radius: 8px; font-size: 13px; font-weight: 700;
+            cursor: pointer; text-align: center; text-decoration: none; box-sizing: border-box; display: inline-block;
+        }
+        .btn-blue { background-color: var(--accent); } 
+        .btn-red { background-color: var(--red); } 
+        .btn-orange { background-color: var(--orange); }
+
+        .btn-plus {
+            background: var(--accent); color: white; border: 1px solid var(--border);
+            width: 32px; height: 32px; border-radius: 50%; font-size: 18px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #020617; }
+        
+        /* កែប្រែសញ្ញាត្រីវិស័យចុចវាយ (Caret Cursor) ឱ្យចេញពណ៌ខ្មៅច្បាស់ */
+        input, select, textarea {
+            width: 100%; padding: 10px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 13px; font-family: 'Battambang', Arial, sans-serif;
+            box-sizing: border-box; background: #ffffff !important; color: #020617 !important; outline: none; font-weight: 600;
+            caret-color: #020617 !important;
+        }
+
+        .item-row-compact {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; background: #f8fafc; border-radius: 6px;
+            margin-bottom: 6px; border: 1.5px solid var(--border); font-size: 12px; color: #020617;
+        }
+
+        #missionMapContainer {
+            height: 300px; width: 100%; border-radius: 8px;
+            border: 1.5px solid var(--border); margin-top: 10px; position: relative;
+            background: #e2e8f0;
+        }
+
+        .compass-box {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(2, 6, 23, 0.88); color: white;
+            padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 1000;
+            border: 1px solid #ffffff; display: flex; align-items: center; gap: 6px;
+        }
+
+        .my-location-btn-map {
+            position: absolute; bottom: 15px; right: 10px;
+            background: var(--accent); color: white; padding: 8px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: bold; z-index: 1000; border: 1.5px solid var(--border); cursor: pointer;
+        }
+
+        .user-heading-marker {
+            transition: transform 0.1s linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .group-container {
+            display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px;
+        }
+        .group-tag-btn {
+            background: #ffffff; border: 1.5px solid var(--border); padding: 6px 12px;
+            border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap;
+            cursor: pointer; color: var(--primary);
+        }
+        .group-tag-btn.active {
+            background: var(--accent); color: white; border-color: var(--accent);
+        }
+
+        .modal-onboarding {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.85); z-index: 10000;
+            justify-content: center; align-items: center;
+        }
+        .onboarding-card {
+            background: #ffffff !important; color: #020617 !important; width: 88%; max-width: 480px; border-radius: 16px;
+            padding: 20px; border: 2px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            text-align: center; max-height: 85vh; overflow-y: auto;
+        }
+        .mode-btn-option {
+            border: 2px solid var(--border); padding: 12px; border-radius: 10px;
+            margin-bottom: 10px; cursor: pointer; text-align: left; background: #f8fafc;
+        }
+        .mode-btn-option.selected { border-color: var(--accent); background: #e0f2fe; }
+    </style>
+</head>
+<body>
+
+    <div id="onboardingModal" class="modal-onboarding">
+        <div class="onboarding-card">
+            <h2 style="margin-top:0; color:#020617; font-size:16px;">📋 គោលការណ៍ប្រើប្រាស់ & ជ្រើសរើសគណនី</h2>
+            
+            <div style="text-align:left; font-size:12px; line-height:1.6; color:#334155; background:#f1f5f9; padding:10px; border-radius:8px; border:1px solid #cbd5e1; margin-bottom:12px;">
+                <b>📜 លក្ខខណ្ឌ និងគោលការណ៍ប្រើប្រាស់៖</b><br>
+                ១. App នេះជួយសម្រួលដល់ការកត់ត្រាផែនការលក់ ទីតាំងអតិថិជន និងការធ្វើដំណើរបេសកកម្ម។<br>
+                ២. ប្រព័ន្ធផ្តល់ជូនការប្រើប្រាស់ Free ៣០ ថ្ងៃដំបូង សម្រាប់សាកល្បងមុខងារទាំងអស់។<br>
+                ៣. រាល់ទិន្នន័យទីតាំង GPS ត្រូវបានរក្សាទុកក្នុងទូរស័ព្ទរបស់អ្នកប្រកបដោយសុវត្ថិភាព។
+            </div>
+
+            <div style="text-align:left; font-weight:bold; margin-bottom:8px; color:#020617;">សូមជ្រើសរើសប្រភេទប្រើប្រាស់របស់អ្នក៖</div>
+
+            <div id="optionIndividual" class="mode-btn-option selected" onclick="selectUsageMode('INDIVIDUAL')">
+                <div style="font-weight:bold; color:#020617;">👤 ប្រើប្រាស់លក្ខណៈ ឯកជន (Individual)</div>
+                <div style="font-size:11px; color:#64748b;">សម្រាប់បុគ្គលិកលក់ ឬមន្ត្រីឥណទានប្រើប្រាស់ផ្ទាល់ខ្លួន</div>
+            </div>
+
+            <div id="optionCompany" class="mode-btn-option" onclick="selectUsageMode('COMPANY')">
+                <div style="font-weight:bold; color:#020617;">🏢 ប្រើប្រាស់លក្ខណៈ ក្រុមហ៊ុន / សាខា (Enterprise)</div>
+                <div style="font-size:11px; color:#64748b;">សម្រាប់ក្រុមការងារ ឬសាខាធនាគារដែលមាន Team Code រួម</div>
+            </div>
+
+            <div id="companyCodeGroup" style="display:none; text-align:left; margin-top:8px;" class="form-group">
+                <label>បញ្ចូលលេខកូដក្រុមហ៊ុន/សាខា (Team Code):</label>
+                <input type="text" id="onboardTeamCode" placeholder="ឧ. ABA_TULKORK_01">
+            </div>
+
+            <button class="btn btn-blue" style="margin-top:10px; padding:12px;" onclick="confirmOnboarding()">✅ យល់ព្រម & ចាប់ផ្តើមប្រើប្រាស់</button>
+        </div>
+    </div>
+
+    <div class="top-banner">📋 ជំនួយការផែនការលក់ & បេសកកម្ម Pro</div>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('missionTab', this)">🚀 បេសកកម្ម</button>
+        <button class="tab-btn" onclick="switchTab('visitTab', this)">📍 ជួបផ្ទាល់</button>
+        <button class="tab-btn" onclick="switchTab('onlineTab', this)">💻 អនឡាញ</button>
+        <button class="tab-btn" onclick="switchTab('contactTab', this)">📇 ទំនាក់ទំនង</button>
+        <button class="tab-btn" onclick="switchTab('appointTab', this)">📅 ណាត់ជួប</button>
+        <button class="tab-btn" onclick="switchTab('reportTab', this)">📊 របាយការណ៍</button>
+    </div>
+
+    <div class="container">
+        <!-- TAB 1: MISSION TRACKER -->
+        <div id="missionTab" class="tab-content">
+            <div id="missionReportCaptureArea" class="card">
+                <h3>🚀 តាមដានបេសកកម្ម និងការធ្វើដំណើរ</h3>
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btnStartMission" class="btn" onclick="startMission()">▶️ ចុចផ្តើមការងារ</button>
+                        <button id="btnEndMission" class="btn btn-red" onclick="endMission()" style="display:none;">⏹️ ចុចបញ្ចប់ការងារ</button>
+                    </div>
+                    <!-- ប៊ូតុងចែករំលែករបាយការណ៍ជារូបភាព -->
+                    <button id="btnShareMissionReport" class="btn btn-orange" onclick="shareMissionReportImage()" style="display:none;">📤 ចែករំលែករបាយការណ៍ជារូបភាព</button>
+                </div>
+                <div id="missionStatusBox" style="margin-top: 10px; font-size: 12px; font-weight: bold; color:#020617;">ស្ថានភាព: មិនទាន់ចាប់ផ្តើមបេសកកម្ម</div>
+
+                <div id="mapWrapper" style="position:relative;">
+                    <div id="missionMapContainer">
+                        <div class="compass-box">
+                            <span>🧭 <span id="compassHeadingText">ជើង (0°)</span></span>
+                            <button onclick="requestCompassPermission()" style="background:#2563eb; color:white; border:none; padding:2px 6px; border-radius:10px; font-size:10px; cursor:pointer;">⚡ Sensor</button>
+                        </div>
+                        <button class="my-location-btn-map" onclick="centerMissionMapToMyLocation()">🎯 ទីតាំងខ្ញុំ</button>
+                    </div>
+                </div>
+
+                <div style="background:#eff6ff; border:1.5px solid var(--accent); padding:10px; border-radius:8px; margin-top:8px; font-size:12px; font-weight:bold; color:#1e40af; display:flex; justify-content:space-between; align-items:center;">
+                    <div id="currentBoundaryInfo">📍 ទីតាំងបច្ចុប្បន្ន: កំពុងស្កែន...</div>
+                    <button class="btn btn-blue" style="width:auto; padding:4px 8px; font-size:11px;" onclick="copyCurrentAddress()">📋 Copy អាសយដ្ឋាន</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: VISIT -->
+        <div id="visitTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📍 អតិថិជនជួបផ្ទាល់</h3>
+                    <button class="btn-plus" onclick="toggleForm('visitForm')">+</button>
+                </div>
+                <div id="visitForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group" style="background:#e0f2fe; padding:8px; border-radius:8px; border:1px solid var(--border);">
+                        <label>📇 ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <select id="selectContactVisit" onchange="autoFillContact('visit')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="custName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="custAddress" placeholder="ឧ. ផ្លូវ 271 ឬ ភូមិ១"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ</label><input type="text" id="custPhone" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 Google Maps Link / ទីតាំង GPS</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="custLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue" style="width:90px; font-size:11px;" onclick="getGPSLocation('custLocation', 'custAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="saveCustomer()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="customerListContainer"></div></div>
+        </div>
+
+        <!-- TAB 3: ONLINE -->
+        <div id="onlineTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>💻 បញ្ជីអនឡាញ</h3>
+                    <button class="btn-plus" onclick="toggleForm('onlineForm')">+</button>
+                </div>
+                <div id="onlineForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group" style="background:#e0f2fe; padding:8px; border-radius:8px; border:1px solid var(--border);">
+                        <label>📇 ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <select id="selectContactOnline" onchange="autoFillContact('online')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="onlineCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន</label><input type="text" id="onlineCustAddress" placeholder="ឧ. ផ្លូវ 271"></div>
+                    <div class="form-group"><label>ឈ្មោះទំនិញ</label><input type="text" id="onlineItemName" placeholder="ឈ្មោះទំនិញ"></div>
+                    <button class="btn btn-blue" onclick="saveOnlineItem()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="onlineItemListContainer"></div></div>
+        </div>
+
+        <!-- TAB 4: CONTACTS -->
+        <div id="contactTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📇 បញ្ជីឈ្មោះទំនាក់ទំនង</h3>
+                    <button class="btn-plus" onclick="toggleForm('contactForm')">+</button>
+                </div>
+                <div id="contactForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះទំនាក់ទំនង</label><input type="text" id="manualContactName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="manualContactAddress" placeholder="ឧ. ផ្លូវជាតិលេខ 3"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ/ព័ត៌មាន</label><input type="text" id="manualContactInfo" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 Google Maps Link (ទីតាំង GPS)</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="manualContactLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue" style="width:90px; font-size:11px;" onclick="getGPSLocation('manualContactLocation', 'manualContactAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <button class="btn btn-blue" onclick="saveManualContact()">រក្សាទុកទំនាក់ទំនង</button>
+                </div>
+            </div>
+            <div class="card">
+                <input type="text" id="searchContactInput" placeholder="🔍 ស្វែងរកឈ្មោះ ឬទីតាំង..." onkeyup="filterContacts()" style="margin-bottom:10px;">
+                <div class="group-container" id="locationGroupsContainer"></div>
+                <div id="allContactsContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: APPOINTMENTS -->
+        <div id="appointTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📅 ការណាត់ជួប</h3>
+                    <button class="btn-plus" onclick="toggleForm('appointForm')">+</button>
+                </div>
+                <div id="appointForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="appCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>កាលបរិច្ឆេទ</label><input type="datetime-local" id="appDateTime"></div>
+                    <button class="btn btn-blue" onclick="saveAppointment()">រក្សាទុក</button>
+                </div>
+            </div>
+            <div class="card"><div id="appointmentListContainer"></div></div>
+        </div>
+
+        <!-- TAB 6: REPORTS & SUPPORT -->
+        <div id="reportTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>📊 របាយការណ៍សង្ខេប</h3>
+                <div id="reportSummaryBox" style="font-size: 13px; line-height: 1.6; background: #e0f2fe; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight:600; color:#020617;"></div>
+            </div>
+
+            <div class="card">
+                <h3>🏢 ព័ត៌មានគណនី & ក្រុមហ៊ុន (Team Code)</h3>
+                <p style="font-size:12px; color:#020617;">
+                    <b>ប្រភេទគណនី:</b> <span id="accountTypeDisplay" style="color:#2563eb; font-weight:bold;"></span><br>
+                    <b>កូដក្រុមហ៊ុន:</b> <span id="teamCodeDisplay" style="color:#ea580c; font-weight:bold;">INDIVIDUAL</span><br>
+                    <b>User ID:</b> <span id="userIdDisplay" style="color:#2563eb; font-weight:bold;"></span>
+                </p>
+                <button class="btn btn-blue" style="font-size:11px;" onclick="reopenOnboarding()">⚙️ ផ្លាស់ប្តូរប្រភេទគណនី (ក្រុមហ៊ុន/ឯកជន)</button>
+            </div>
+
+            <div class="card" style="background:#fff7ed; border-color:#ea580c;">
+                <h3 style="border-left-color:#ea580c;">💬 ជំនួយបច្ចេកទេស & ទំនាក់ទំនងផ្ទាល់</h3>
+                <div style="font-size:12px; font-weight:bold; margin:10px 0; line-height:1.8; color:#020617;">
+                    👤 ឈ្មោះ: <b>មុំ សាមាន</b><br>
+                    💬 Telegram: <a href="https://t.me/SameanMom168" target="_blank" style="color:#2563eb;">@SameanMom168</a><br>
+                    📞 ទូរស័ព្ទ: <a href="tel:0964444679" style="color:#2563eb;">0964444679</a>
+                </div>
+                <a href="https://t.me/SameanMom168" target="_blank" class="btn btn-orange">💬 ទាក់ទងតាម Telegram ផ្ទាល់</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        if (tg) {
+            try {
+                tg.ready();
+                tg.expand();
+            } catch (e) { console.warn("Telegram WebApp API ready error:", e); }
+        }
+
+        let selectedMode = 'INDIVIDUAL';
+
+        function checkFirstTimeUser() {
+            let hasCompleted = localStorage.getItem('app_onboarding_completed');
+            if (!hasCompleted) {
+                document.getElementById('onboardingModal').style.display = 'flex';
+            }
+        }
+
+        function selectUsageMode(mode) {
+            selectedMode = mode;
+            document.getElementById('optionIndividual').classList.remove('selected');
+            document.getElementById('optionCompany').classList.remove('selected');
+
+            if (mode === 'INDIVIDUAL') {
+                document.getElementById('optionIndividual').classList.add('selected');
+                document.getElementById('companyCodeGroup').style.display = 'none';
+            } else {
+                document.getElementById('optionCompany').classList.add('selected');
+                document.getElementById('companyCodeGroup').style.display = 'block';
+            }
+        }
+
+        function confirmOnboarding() {
+            let teamCode = 'INDIVIDUAL';
+            if (selectedMode === 'COMPANY') {
+                teamCode = document.getElementById('onboardTeamCode').value.trim();
+                if (!teamCode) { alert("សូមបញ្ចូលលេខកូដក្រុមហ៊ុន/សាខា!"); return; }
+            }
+
+            localStorage.setItem('sales_account_mode', selectedMode);
+            localStorage.setItem('sales_team_code', teamCode);
+            localStorage.setItem('app_onboarding_completed', 'true');
+
+            document.getElementById('onboardingModal').style.display = 'none';
+            updateProfileDisplay();
+        }
+
+        function reopenOnboarding() { document.getElementById('onboardingModal').style.display = 'flex'; }
+
+        function updateProfileDisplay() {
+            let mode = localStorage.getItem('sales_account_mode') || 'INDIVIDUAL';
+            let code = localStorage.getItem('sales_team_code') || 'INDIVIDUAL';
+            document.getElementById('accountTypeDisplay').innerText = mode === 'COMPANY' ? 'ក្រុមហ៊ុន / សាខា' : 'ឯកជន (Individual)';
+            document.getElementById('teamCodeDisplay').innerText = code;
+        }
+
+        function checkTrialStatus() {
+            let firstOpen = localStorage.getItem('app_first_open_date');
+            let isPaid = localStorage.getItem('app_is_paid');
+            if (isPaid === 'true') return;
+            if (!firstOpen) { firstOpen = new Date().toISOString(); localStorage.setItem('app_first_open_date', firstOpen); }
+            let diffDays = Math.ceil((new Date() - new Date(firstOpen)) / (1000 * 60 * 60 * 24));
+            if (diffDays > 30) {
+                document.body.innerHTML = `
+                    <div style="max-width:450px; margin:30px auto; padding:20px; background:white; border-radius:16px; border:2px solid #020617; text-align:center; font-family:'Battambang', sans-serif;">
+                        <h2 style="color:#dc2626;">⚠️ ផុតកំណត់ Free ៣០ ថ្ងៃ!</h2>
+                        <p style="font-size:13px;">សូមបន្តសុពលភាព ($1.99/ខែ) ដើម្បីបន្តប្រើប្រាស់</p>
+                        <div style="font-weight:bold; margin-top:10px; font-size:14px; color:#2563eb;">ទំនាក់ទំនង៖ មុំ សាមាន (0964444679)</div>
+                        <a href="https://t.me/SameanMom168" target="_blank" style="background:#2563eb; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; display:block; margin-top:15px;">💬 ទាក់ទងទូទាត់តាម Telegram</a>
+                    </div>`;
+            }
+        }
+
+        let userId = localStorage.getItem('sales_user_uuid') || ('USER_' + Math.random().toString(36).substr(2, 9).toUpperCase());
+        localStorage.setItem('sales_user_uuid', userId);
+
+        let customers = JSON.parse(localStorage.getItem('sales_customers')) || [];
+        let onlineItems = JSON.parse(localStorage.getItem('sales_online')) || [];
+        let manualContacts = JSON.parse(localStorage.getItem('sales_manual_contacts')) || [];
+        let appointments = JSON.parse(localStorage.getItem('sales_appoint')) || [];
+
+        let missionMap = null, watchId = null, currentMission = null, myLocationMarker = null, currentPolyline = null;
+        let customerMarkersGroup = null;
+        let currentHeading = 0, currentRawAddress = '';
+
+        document.getElementById('userIdDisplay').innerText = userId;
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block'; btn.classList.add('active');
+            
+            if(tabId === 'contactTab') loadAllContacts();
+            if(tabId === 'visitTab' || tabId === 'onlineTab') populateContactDropdowns();
+            if(tabId === 'visitTab') loadCustomers();
+            if(tabId === 'onlineTab') loadOnlineItems();
+            if(tabId === 'appointTab') loadAppointments();
+            if(tabId === 'reportTab') generateReport();
+            if(tabId === 'missionTab') {
+                if (!missionMap) initMissionMap();
+                else {
+                    setTimeout(() => { missionMap.invalidateSize(); }, 200);
+                    renderSavedCustomerMarkers();
+                }
+            }
+        }
+
+        function toggleForm(id) {
+            let f = document.getElementById(id);
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        const compassArrowSVG = `
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="18" cy="18" r="16" fill="#2563eb" fill-opacity="0.25" stroke="#2563eb" stroke-width="1.5"/>
+                <polygon points="18,4 25,28 18,22 11,28" fill="#2563eb" stroke="#ffffff" stroke-width="1.5"/>
+            </svg>
+        `;
+
+        const compassIcon = L.divIcon({
+            className: 'user-heading-marker',
+            html: `<div id="headingArrowIcon" style="transform-origin: center center; width:36px; height:36px;">${compassArrowSVG}</div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        function initMissionMap() {
+            if (missionMap) return;
+            try {
+                missionMap = L.map('missionMapContainer', { zoomControl: false, preferCanvas: true }).setView([11.5564, 104.9282], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, crossOrigin: true }).addTo(missionMap);
+                customerMarkersGroup = L.layerGroup().addTo(missionMap);
+                centerMissionMapToMyLocation();
+                renderSavedCustomerMarkers();
+                initDeviceOrientation();
+            } catch (err) {
+                console.error("Map Initialization Error:", err);
+            }
+        }
+
+        function initDeviceOrientation() {
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
+        }
+
+        function requestCompassPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation, true);
+                            alert("⚡ បើក Sensor ទិសដៅបានជោគជ័យ!");
+                        } else {
+                            alert("⚠️ មិនបានអនុញ្ញាតឱ្យប្រើប្រាស់ Sensor ទិសដៅ!");
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                initDeviceOrientation();
+                alert("⚡ ស្កែនប្រព័ន្ធ Sensor ទិសដៅរួចរាល់!");
+            }
+        }
+
+        function handleOrientation(event) {
+            let heading = null;
+            if (event.webkitCompassHeading) {
+                heading = event.webkitCompassHeading;
+            } else if (event.alpha !== null) {
+                heading = 360 - event.alpha;
+            }
+
+            if (heading !== null) {
+                currentHeading = Math.round(heading);
+                updateHeadingUI(currentHeading);
+            }
+        }
+
+        function updateHeadingUI(heading) {
+            let directions = ['ជើង (N)', 'កើត-ជើង (NE)', 'កើត (E)', 'កើត-ត្បូង (SE)', 'ត្បូង (S)', 'លិច-ត្បូង (SW)', 'លិច (W)', 'លិច-ជើង (NW)'];
+            let index = Math.round(heading / 45) % 8;
+            let dirText = directions[index];
+
+            document.getElementById('compassHeadingText').innerText = `${dirText} (${heading}°)`;
+
+            let arrowElem = document.getElementById('headingArrowIcon');
+            if (arrowElem) {
+                arrowElem.style.transform = `rotate(${heading}deg)`;
+            }
+        }
+
+        function centerMissionMapToMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                    if (missionMap) {
+                        missionMap.setView([lat, lng], 16);
+                        if (myLocationMarker) {
+                            myLocationMarker.setLatLng([lat, lng]);
+                        } else {
+                            myLocationMarker = L.marker([lat, lng], { icon: compassIcon }).addTo(missionMap);
+                        }
+                        fetchAddressFromLatLng(lat, lng);
+                    }
+                }, () => {}, { enableHighAccuracy: true });
+            }
+        }
+
+        function renderSavedCustomerMarkers() {
+            if (!missionMap || !customerMarkersGroup) return;
+            customerMarkersGroup.clearLayers();
+            getAllUniqueContacts().forEach(c => {
+                if (c.location && c.location.includes('q=')) {
+                    let parts = c.location.split('q=')[1].split(',');
+                    if (parts.length === 2) {
+                        let lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            L.marker([lat, lng]).addTo(customerMarkersGroup)
+                                .bindPopup(`<b>👤 ${c.name}</b><br>📍 ${c.address || 'គ្មានទីតាំង'}<br>📞 ${c.phone || ''}`);
+                        }
+                    }
+                }
+            });
+        }
+
+        function getGPSLocation(elementId, addressInputId = '') {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    let lat = position.coords.latitude, lon = position.coords.longitude;
+                    document.getElementById(elementId).value = `https://maps.google.com/?q=${lat},${lon}`;
+                    if (addressInputId) fetchAddressFromLatLng(lat, lon, addressInputId);
+                    alert("🎯 ចាប់យកទីតាំង GPS បានជោគជ័យ!");
+                });
+            }
+        }
+
+        function fetchAddressFromLatLng(lat, lng, targetInputId = '') {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=km`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        if (targetInputId) document.getElementById(targetInputId).value = data.display_name;
+                        else {
+                            currentRawAddress = data.display_name;
+                            document.getElementById('currentBoundaryInfo').innerHTML = `📍 <b>ទីតាំង:</b> ${data.display_name}`;
+                        }
+                    }
+                }).catch(() => {});
+        }
+
+        function copyCurrentAddress() {
+            if (currentRawAddress) {
+                navigator.clipboard.writeText(currentRawAddress);
+                alert("📋 ចម្លងអាសយដ្ឋានបានជោគជ័យ!");
+            }
+        }
+
+        function initMissionTracking() {
+            let savedMission = localStorage.getItem('sales_active_mission');
+            if (savedMission) {
+                currentMission = JSON.parse(savedMission);
+                document.getElementById('btnStartMission').style.display = 'none';
+                document.getElementById('btnEndMission').style.display = 'block';
+                document.getElementById('btnShareMissionReport').style.display = 'none';
+                document.getElementById('missionStatusBox').innerText = "🟢 កំពុងបន្តកត់ត្រាបេសកកម្ម (Auto-Resumed)...";
+                drawMatchedRoute();
+                startGeolocationWatch();
+            }
+        }
+
+        function startMission() {
+            if (!navigator.geolocation) return;
+            currentMission = { date: new Date().toISOString().slice(0, 10), startTime: new Date().toLocaleTimeString(), endTime: null, points: [] };
+            localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+
+            document.getElementById('btnStartMission').style.display = 'none';
+            document.getElementById('btnEndMission').style.display = 'block';
+            document.getElementById('btnShareMissionReport').style.display = 'none';
+            document.getElementById('missionStatusBox').innerText = "🟢 កំពុងកត់ត្រាបេសកកម្ម...";
+
+            if (currentPolyline && missionMap) missionMap.removeLayer(currentPolyline);
+            if (missionMap) currentPolyline = L.polyline([], { color: '#2563eb', weight: 5, opacity: 0.8 }).addTo(missionMap);
+
+            startGeolocationWatch();
+        }
+
+        function startGeolocationWatch() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            watchId = navigator.geolocation.watchPosition((pos) => {
+                let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                if (!currentMission) return;
+
+                let points = currentMission.points;
+                if (points.length > 0) {
+                    let lastPt = points[points.length - 1];
+                    let dist = Math.hypot(lat - lastPt.lat, lng - lastPt.lng);
+                    if (dist < 0.00005) return;
+                }
+
+                currentMission.points.push({ lat, lng, time: new Date().toISOString() });
+                localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+
+                if (myLocationMarker && missionMap) myLocationMarker.setLatLng([lat, lng]);
+
+                drawMatchedRoute();
+
+            }, null, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+        }
+
+        function drawMatchedRoute() {
+            if (!currentMission || !currentMission.points || currentMission.points.length < 2) return;
+
+            let pts = currentMission.points.slice(-100); 
+            let coordString = pts.map(p => `${p.lng},${p.lat}`).join(';');
+            let url = `https://router.project-osrm.org/route/v1/driving/${coordString}?overview=full&geometries=geojson`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.routes && data.routes.length > 0) {
+                        let routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                        if (currentPolyline && missionMap) {
+                            currentPolyline.setLatLngs(routeCoords);
+                        } else if (missionMap) {
+                            currentPolyline = L.polyline(routeCoords, { color: '#2563eb', weight: 5, opacity: 0.8 }).addTo(missionMap);
+                        }
+                    }
+                })
+                .catch(err => {
+                    let fallbackCoords = currentMission.points.map(p => [p.lat, p.lng]);
+                    if (currentPolyline) currentPolyline.setLatLngs(fallbackCoords);
+                });
+        }
+
+        /* បញ្ចប់បេសកកម្ម និងបង្ហាញប៊ូតុងចែករំលែករបាយការណ៍ជារូបភាព */
+        function endMission() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            if (currentMission) {
+                currentMission.endTime = new Date().toLocaleTimeString();
+                let history = JSON.parse(localStorage.getItem('sales_mission_history')) || [];
+                history.push(currentMission);
+                localStorage.setItem('sales_mission_history', JSON.stringify(history));
+                localStorage.setItem('sales_last_completed_mission', JSON.stringify(currentMission));
+                localStorage.removeItem('sales_active_mission');
+            }
+
+            document.getElementById('btnStartMission').style.display = 'block';
+            document.getElementById('btnEndMission').style.display = 'none';
+            document.getElementById('btnShareMissionReport').style.display = 'block'; // បង្ហាញប៊ូតុងចែករំលែក
+            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មបានបញ្ចប់! អ្នកអាចចែករំលែករបាយការណ៍ជារូបភាពបាន។";
+        }
+
+        /* មុខងារបង្កើតរូបភាពរបាយការណ៍បេសកកម្ម និងចែករំលែក/ទាញយក */
+        function shareMissionReportImage() {
+            let captureTarget = document.getElementById('missionReportCaptureArea');
+            if (!captureTarget) return;
+
+            alert("⏳ កំពុងបង្កើតរូបភាពរបាយការណ៍បេសកកម្ម...");
+
+            html2canvas(captureTarget, {
+                useCORS: true,
+                allowTaint: true,
+                scale: 2
+            }).then(canvas => {
+                canvas.toBlob(blob => {
+                    let file = new File([blob], `Mission_Report_${new Date().toISOString().slice(0,10)}.png`, { type: 'image/png' });
+
+                    // ចែករំលែកតាម Mobile Web Share API
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            files: [file],
+                            title: 'របាយការណ៍បេសកកម្ម',
+                            text: '📍 របាយការណ៍បេសកកម្ម និងខ្សែផ្លូវធ្វើដំណើរ'
+                        }).catch(err => console.log('Share canceled:', err));
+                    } else {
+                        // ប្រសិនបើ Browser មិន Support Share API ទេ វានឹងទាញយក (Download) រូបភាពភ្លាមៗ
+                        let link = document.createElement('a');
+                        link.download = `Mission_Report_${new Date().toISOString().slice(0,10)}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        alert("✅ បានទាញយករូបភាពរបាយការណ៍បេសកកម្មដោយជោគជ័យ!");
+                    }
+                }, 'image/png');
+            }).catch(err => {
+                alert("❌ មានបញ្ហាក្នុងការបង្កើតរូបភាព!");
+                console.error(err);
+            });
+        }
+
+        function getAllUniqueContacts() {
+            let list = [];
+            customers.forEach((c, i) => list.push({ name: c.name, phone: c.phone || '', address: c.address || '', location: c.location || '', origin: 'visit', idx: i }));
+            onlineItems.forEach((o, i) => list.push({ name: o.custName, phone: '', address: o.custAddress || '', location: '', origin: 'online', idx: i }));
+            manualContacts.forEach((m, i) => list.push({ name: m.name, phone: m.info || '', address: m.address || '', location: m.location || '', origin: 'manual', idx: i }));
+            return list;
+        }
+
+        function populateContactDropdowns() {
+            let contacts = getAllUniqueContacts();
+            let options = '<option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>';
+            contacts.forEach((c, idx) => { options += `<option value="${idx}">${c.name} (${c.address || 'គ្មានទីតាំង'})</option>`; });
+            document.getElementById('selectContactVisit').innerHTML = options;
+            document.getElementById('selectContactOnline').innerHTML = options;
+        }
+
+        function autoFillContact(type) {
+            let contacts = getAllUniqueContacts();
+            let idx = document.getElementById(type === 'visit' ? 'selectContactVisit' : 'selectContactOnline').value;
+            if(idx !== '') {
+                let c = contacts[idx];
+                if(type === 'visit') {
+                    document.getElementById('custName').value = c.name;
+                    document.getElementById('custPhone').value = c.phone;
+                    document.getElementById('custAddress').value = c.address;
+                    document.getElementById('custLocation').value = c.location;
+                } else {
+                    document.getElementById('onlineCustName').value = c.name;
+                    document.getElementById('onlineCustAddress').value = c.address;
+                }
+            }
+        }
+
+        function generateLocationGroupButtons() {
+            let container = document.getElementById('locationGroupsContainer');
+            let list = getAllUniqueContacts();
+            let locationCounts = {};
+
+            list.forEach(c => {
+                let addr = c.address ? c.address.trim() : 'មិនទាន់បញ្ជាក់';
+                locationCounts[addr] = (locationCounts[addr] || 0) + 1;
+            });
+
+            let keys = Object.keys(locationCounts);
+            if (keys.length === 0) {
+                container.innerHTML = "<small style='color:#64748b;'>គ្មានទិន្នន័យទីតាំង</small>";
+                return;
+            }
+
+            let html = `<button class="group-tag-btn active" onclick="filterByGroup('ALL', this)">ទាំងអស់ (${list.length})</button>`;
+            keys.forEach(key => {
+                html += `<button class="group-tag-btn" onclick="filterByGroup('${key}', this)">📍 ${key} (${locationCounts[key]})</button>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function filterByGroup(locationName, btn) {
+            document.querySelectorAll('.group-tag-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            loadAllContacts(locationName === 'ALL' ? '' : locationName);
+        }
+
+        function loadAllContacts(filter = '') {
+            let container = document.getElementById('allContactsContainer');
+            let list = getAllUniqueContacts();
+
+            if (filter) {
+                list = list.filter(c => (c.address && c.address.toLowerCase().includes(filter.toLowerCase())) || c.name.toLowerCase().includes(filter.toLowerCase()));
+            }
+
+            container.innerHTML = list.length === 0 ? "<p style='text-align:center;'>គ្មានទិន្នន័យ</p>" : "";
+            list.forEach((c, idx) => {
+                let mapBtn = c.location ? `<a href="${c.location}" target="_blank" style="color:#2563eb; font-weight:bold;">🗺️ Maps</a>` : '';
+                container.innerHTML += `
+                    <div class="item-row-compact">
+                        <div><b>👤 ${idx + 1}. ${c.name}</b><br><small style="color:#475569;">📍 ${c.address || 'គ្មានទីតាំង'}</small></div>
+                        <div style="text-align:right;"><span style="font-size:11px; color:#2563eb; font-weight:bold;">${c.phone || ''}</span><br>${mapBtn}</div>
+                    </div>
+                `;
+            });
+            generateLocationGroupButtons();
+        }
+
+        function filterContacts() { loadAllContacts(document.getElementById('searchContactInput').value); }
+
+        function saveCustomer() {
+            let name = document.getElementById('custName').value.trim();
+            if(!name) return;
+            
+            customers.push({ 
+                name, 
+                address: document.getElementById('custAddress').value, 
+                phone: document.getElementById('custPhone').value, 
+                location: document.getElementById('custLocation').value 
+            });
+            localStorage.setItem('sales_customers', JSON.stringify(customers));
+
+            document.getElementById('custName').value = '';
+            document.getElementById('custAddress').value = '';
+            document.getElementById('custPhone').value = '';
+            document.getElementById('custLocation').value = '';
+            document.getElementById('selectContactVisit').value = '';
+
+            toggleForm('visitForm'); 
+            loadCustomers();
+            loadAllContacts();
+            populateContactDropdowns();
+            if(missionMap) renderSavedCustomerMarkers();
+        }
+
+        function loadCustomers() {
+            let c = document.getElementById('customerListContainer');
+            c.innerHTML = customers.length === 0 ? "<p style='text-align:center;'>គ្មានទិន្នន័យ</p>" : "";
+            customers.forEach((item, i) => { c.innerHTML += `<div class="item-row-compact"><span><b>${i+1}. ${item.name}</b> (${item.address})</span><span>${item.phone}</span></div>`; });
+        }
+
+        function saveOnlineItem() {
+            let custName = document.getElementById('onlineCustName').value.trim();
+            if(!custName) return;
+            
+            onlineItems.push({ 
+                custName, 
+                custAddress: document.getElementById('onlineCustAddress').value, 
+                name: document.getElementById('onlineItemName').value 
+            });
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+
+            document.getElementById('onlineCustName').value = '';
+            document.getElementById('onlineCustAddress').value = '';
+            document.getElementById('onlineItemName').value = '';
+            document.getElementById('selectContactOnline').value = '';
+
+            toggleForm('onlineForm'); 
+            loadOnlineItems();
+            loadAllContacts();
+            populateContactDropdowns();
+        }
+
+        function loadOnlineItems() {
+            let c = document.getElementById('onlineItemListContainer');
+            c.innerHTML = onlineItems.length === 0 ? "<p style='text-align:center;'>គ្មានទិន្នន័យ</p>" : "";
+            onlineItems.forEach((item, i) => { c.innerHTML += `<div class="item-row-compact"><span><b>${i+1}. ${item.custName}</b> (${item.custAddress || 'គ្មានទីតាំង'}) - ${item.name}</span></div>`; });
+        }
+
+        function saveManualContact() {
+            let name = document.getElementById('manualContactName').value.trim();
+            if(!name) return;
+            
+            manualContacts.push({ 
+                name, 
+                address: document.getElementById('manualContactAddress').value, 
+                info: document.getElementById('manualContactInfo').value, 
+                location: document.getElementById('manualContactLocation').value 
+            });
+            localStorage.setItem('sales_manual_contacts', JSON.stringify(manualContacts));
+
+            document.getElementById('manualContactName').value = '';
+            document.getElementById('manualContactAddress').value = '';
+            document.getElementById('manualContactInfo').value = '';
+            document.getElementById('manualContactLocation').value = '';
+
+            toggleForm('contactForm'); 
+            loadAllContacts();
+            populateContactDropdowns();
+            if(missionMap) renderSavedCustomerMarkers();
+        }
+
+        function saveAppointment() {
+            let name = document.getElementById('appCustName').value.trim();
+            if(!name) return;
+
+            appointments.push({ 
+                name, 
+                datetime: document.getElementById('appDateTime').value 
+            });
+            localStorage.setItem('sales_appoint', JSON.stringify(appointments));
+
+            document.getElementById('appCustName').value = '';
+            document.getElementById('appDateTime').value = '';
+
+            toggleForm('appointForm'); 
+            loadAppointments();
+        }
+
+        function loadAppointments() {
+            let c = document.getElementById('appointmentListContainer');
+            c.innerHTML = appointments.length === 0 ? "<p style='text-align:center;'>គ្មានទិន្នន័យ</p>" : "";
+            appointments.forEach((item, i) => { c.innerHTML += `<div class="item-row-compact"><span><b>${i+1}. ${item.name}</b> (${item.datetime})</span></div>`; });
+        }
+
+        function generateReport() {
+            let total = getAllUniqueContacts().length;
+            document.getElementById('reportSummaryBox').innerText = `📊 របាយការណ៍សរុប៖\n- អតិថិជនសរុបក្នុងប្រព័ន្ធ: ${total} នាក់\n- ជួបផ្ទាល់: ${customers.length} នាក់\n- អនឡាញ: ${onlineItems.length} នាក់\n- ការណាត់ជួប: ${appointments.length} នាក់`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateProfileDisplay();
+            checkFirstTimeUser();
+            checkTrialStatus();
+            loadAllContacts();
+            initMissionMap();
+            initMissionTracking();
+        });
+    </script>
+</body>
+</html>
