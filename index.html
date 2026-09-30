@@ -1,0 +1,28 @@
+function saveManualContact() {
+    let name = document.getElementById('manualContactName').value.trim();
+    if(!name) { alert("សូមបញ្ចូលឈ្មោះទំនាក់ទំនង!"); return; }
+    
+    let editIdx = parseInt(document.getElementById('editContactIndex').value);
+    let item = { 
+        name, 
+        address: cleanAddress(document.getElementById('manualContactAddress').value), 
+        info: document.getElementById('manualContactInfo').value, 
+        location: document.getElementById('manualContactLocation').value 
+    };
+
+    if (editIdx === -1) manualContacts.push(item);
+    else manualContacts[editIdx] = item;
+
+    // 1. រក្សាទុកចូល LocalStorage
+    localStorage.setItem('sales_manual_contacts', JSON.stringify(manualContacts));
+    
+    // 2. Clear input search & reset form
+    document.getElementById('searchContactInput').value = '';
+    
+    // 3. Force Sync & Refresh UI ភ្លាមៗ
+    saveAndSyncState();
+    resetContactForm();
+    loadAllContacts(); // បង្ខំឲ្យលោតទិន្នន័យលើ Contact Tab ភ្លាមៗ
+    populateContactDropdowns();
+    if(missionMap) renderSavedCustomerMarkers();
+}
