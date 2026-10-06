@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="color-scheme" content="light">
+    <title>Sales Planner Pro</title>
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #020617;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #020617;
+            --red: #dc2626;
+            --red-light: #fca5a5;
+            --green: #16a34a;
+            --orange: #ea580c;
+            --border: #cbd5e1;
+        }
+
+        html, body {
+            background-color: var(--bg) !important;
+            color: var(--text) !important;
+            font-family: 'Battambang', Arial, sans-serif;
+            margin: 0; padding: 0;
+            font-size: 13px;
+            min-height: 100vh;
+        }
+
+        /* ----------------------------------------------------
+           តម្រូវការទី ១: ពេលចុចជាប់/Focus លោតសញ្ញាពណ៌ខ្មៅដាច់ខាត (Black Mode Keyboard/Input)
+           ---------------------------------------------------- */
+        input:focus, select:focus, textarea:focus,
+        input:active, select:active, textarea:active {
+            border: 2.5px solid #000000 !important;
+            outline: 2px solid #000000 !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            box-shadow: 0 0 8px rgba(0,0,0,0.6) !important;
+        }
+
+        .top-banner {
+            background: #020617; color: #ffffff !important;
+            padding: 12px 16px; font-size: 15px; font-weight: bold;
+            border-bottom: 2px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .user-pill {
+            background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: normal; display: flex; align-items: center; gap: 6px;
+        }
+
+        .nav-tabs {
+            display: flex; background: #ffffff;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+        .tab-btn {
+            flex: 1; padding: 10px 6px; text-align: center; font-size: 12px; font-weight: 700;
+            background: #ffffff; border: none; cursor: pointer; color: #475569;
+            border-bottom: 3px solid transparent; white-space: nowrap;
+        }
+        .tab-btn.active {
+            color: var(--accent); border-bottom-color: var(--accent); background: #bae6fd;
+        }
+
+        .container { padding: 12px; max-width: 600px; margin: 0 auto; padding-bottom: 80px; }
+        .card {
+            background: var(--card-bg); border-radius: 12px; padding: 14px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08); border: 1.5px solid var(--border); color: var(--text);
+        }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h3 { font-size: 14px; color: var(--primary); margin: 0; font-weight: 700; border-left: 4px solid var(--accent); padding-left: 8px; }
+
+        .btn {
+            background-color: var(--green); color: white !important; border: 1px solid var(--border);
+            padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700;
+            cursor: pointer; text-align: center; text-decoration: none; display: inline-block; box-sizing: border-box;
+        }
+        .btn-blue { background-color: var(--accent); } 
+        .btn-red { background-color: var(--red); } 
+        .btn-orange { background-color: var(--orange); }
+        .btn-gray { background-color: #64748b; }
+
+        .btn-plus {
+            background: var(--accent); color: white; border: 1px solid var(--border);
+            width: 32px; height: 32px; border-radius: 50%; font-size: 18px; font-weight: bold;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #020617; }
+        
+        input, select, textarea {
+            width: 100%; padding: 10px; border: 1.5px solid var(--border);
+            border-radius: 8px; font-size: 13px; font-family: 'Battambang', Arial, sans-serif;
+            box-sizing: border-box; background: #ffffff !important; color: #020617 !important; font-weight: 600;
+            transition: all 0.1s ease-in-out;
+        }
+
+        .item-row-compact {
+            display: flex; flex-direction: column; gap: 4px; padding: 10px; background: #f8fafc;
+            border-radius: 8px; margin-bottom: 8px; border: 1.5px solid var(--border); font-size: 12px; color: #020617;
+        }
+
+        .badge-status {
+            display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; color: white; margin-left: 6px;
+        }
+        .bg-interested { background-color: #16a34a; }
+        .bg-not-interested { background-color: #dc2626; }
+        .bg-thinking { background-color: #ea580c; }
+
+        .action-btns { display: flex; gap: 6px; margin-top: 6px; }
+        .btn-sm { padding: 4px 8px; font-size: 11px; width: auto; }
+
+        #missionMapContainer {
+            height: 320px; width: 100%; border-radius: 8px; border: 1.5px solid var(--border);
+            margin-top: 10px; position: relative; background: #e2e8f0;
+        }
+
+        .compass-box {
+            position: absolute; top: 10px; right: 10px; background: rgba(2, 6, 23, 0.88); color: white;
+            padding: 6px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 1000;
+            border: 1px solid #ffffff; display: flex; align-items: center; gap: 6px;
+        }
+
+        .my-location-btn-map {
+            position: absolute; bottom: 15px; right: 10px; background: var(--accent); color: white;
+            padding: 8px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 1000;
+            border: 1.5px solid var(--border); cursor: pointer;
+        }
+
+        .user-heading-marker { transition: transform 0.1s linear; display: flex; align-items: center; justify-content: center; }
+        .group-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 10px; }
+        .group-tag-btn {
+            background: #ffffff; border: 1.5px solid var(--border); padding: 6px 12px;
+            border-radius: 20px; font-size: 11px; font-weight: bold; white-space: nowrap; cursor: pointer; color: var(--primary);
+        }
+        .group-tag-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .modal-onboarding {
+            display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(2, 6, 23, 0.9); z-index: 10000; justify-content: center; align-items: center;
+        }
+        .onboarding-card {
+            background: #ffffff !important; color: #020617 !important; width: 90%; max-width: 450px; border-radius: 16px;
+            padding: 20px; border: 2px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            text-align: center; max-height: 90vh; overflow-y: auto;
+        }
+        .mode-btn-option {
+            border: 2px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 10px;
+            cursor: pointer; text-align: left; background: #f8fafc;
+        }
+        .mode-btn-option.selected { border-color: var(--accent); background: #e0f2fe; }
+
+        .map-legend {
+            background: rgba(255, 255, 255, 0.95); padding: 8px 12px; border-radius: 8px;
+            border: 1px solid var(--border); font-size: 11px; margin-top: 6px; display: flex; gap: 12px; justify-content: center;
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-weight: bold; }
+        .legend-color { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+        
+        .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+        .report-card-mini { background: #f1f5f9; padding: 8px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .report-card-mini .val { font-size: 14px; font-weight: bold; color: var(--accent); }
+
+        .mission-metrics-badge {
+            background: #f0fdf4; border: 1.5px solid #16a34a; padding: 8px 12px;
+            border-radius: 8px; margin-top: 8px; font-size: 12px; font-weight: bold; color: #166534;
+            display: flex; justify-content: space-around; text-align: center;
+        }
+
+        .target-bar-bg {
+            background: #e2e8f0; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin-top: 4px;
+        }
+        .target-bar-fill {
+            background: #2563eb; height: 100%; width: 0%; transition: width 0.3s ease;
+        }
+
+        .items-list-box {
+            background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px;
+            padding: 8px; margin-top: 6px; max-height: 120px; overflow-y: auto;
+        }
+        .item-tag {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #ffffff; padding: 4px 8px; border-radius: 6px; margin-bottom: 4px;
+            border: 1px solid #cbd5e1; font-size: 11.5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MODAL FOR ADDING MULTIPLE SALES ITEMS -->
+    <div id="addSalesItemModal" class="modal-onboarding" style="display:none;">
+        <div class="onboarding-card" style="max-width: 380px;">
+            <h3 style="margin-top:0; color:#020617; font-size:15px;">🛒 បន្ថែមមុខទំនិញលក់បាន</h3>
+            <div class="form-group" style="text-align:left; margin-top:10px;">
+                <label>ឈ្មោះទំនិញ / សេវាកម្ម:</label>
+                <input type="text" id="modalItemName" placeholder="ឧ. កាហ្វេទឹកដោះគោ ឬ ទំនិញ A">
+            </div>
+            <div class="form-group" style="text-align:left;">
+                <label>តម្លៃលក់ ($):</label>
+                <input type="number" id="modalItemPrice" placeholder="0.00">
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn btn-blue" style="flex:1;" onclick="confirmAddSalesItem()">+ បន្ថែមទំនិញ</button>
+                <button class="btn btn-gray" style="flex:1;" onclick="closeAddSalesItemModal()">បោះបង់</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIN & ACCOUNT SELECTION MODAL -->
+    <div id="onboardingModal" class="modal-onboarding">
+        <div class="onboarding-card">
+            <h2 style="margin-top:0; color:#020617; font-size:16px;">🔐 ស្វាគមន៍មកកាន់ Sales Planner Pro</h2>
+            
+            <div id="tgUserDetectBox" style="background:#f0f9ff; border:1px solid #bae6fd; padding:10px; border-radius:8px; margin-bottom:12px; text-align:left;">
+                <span style="font-size:11px; color:#0369a1; font-weight:bold;">🤖 ភ្ជាប់ដោយស្វ័យប្រវត្តិ Telegram គណនី៖</span>
+                <div id="tgAuthProfileName" style="font-size:13px; font-weight:bold; color:#020617; margin-top:2px;">កំពុងស្កែន Telegram Info...</div>
+            </div>
+
+            <div style="text-align:left; font-weight:bold; margin-bottom:8px; color:#020617;">១. សូមជ្រើសរើសប្រភេទគណនីប្រើប្រាស់៖</div>
+            
+            <div id="optionIndividual" class="mode-btn-option selected" onclick="selectAuthMode('INDIVIDUAL')">
+                <div style="font-weight:bold; color:#020617;">👤 ប្រើប្រាស់លក្ខណៈ ឯកជន (Individual)</div>
+                <div style="font-size:11px; color:#64748b;">បើកប្រើភ្លាមៗជាមួយឈ្មោះ Telegram របស់អ្នកដោយឥតគិតថ្លៃ 30 ថ្ងៃ</div>
+            </div>
+
+            <div id="individualRoleBox" style="text-align:left; background:#f0fdf4; border:1px solid #bbf7d0; padding:10px; border-radius:8px; margin-bottom:12px;">
+                <label style="color:#166534; font-size:11px;">🎯 ជ្រើសរើសប្រភេទតួនាទីបុគ្គលិក (ឯកជន)៖</label>
+                <select id="indUserRole" style="margin-top:4px;">
+                    <option value="SALES">🛍️ បុគ្គលិកលក់ (Sales Executive)</option>
+                    <option value="BANK">🏦 បុគ្គលិក គ្រឹះស្ថានមីក្រូហិរញ្ញវត្ថុ / ធនាគារ (MFI/Bank Officer)</option>
+                </select>
+            </div>
+
+            <div id="optionCompany" class="mode-btn-option" onclick="selectAuthMode('COMPANY')">
+                <div style="font-weight:bold; color:#020617;">🏢 ប្រើប្រាស់លក្ខណៈ ក្រុមហ៊ុន (Company/Enterprise)</div>
+                <div style="font-size:11px; color:#64748b;">ចូលប្រើប្រាស់ដោយ Name & Password ផ្តល់ជូនដោយ Bot</div>
+            </div>
+
+            <div id="companyAuthForm" style="display:none; text-align:left; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
+                <div style="display:flex; gap:10px; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px;">
+                    <button class="btn btn-blue btn-sm" id="subTabLoginBtn" style="flex:1;" onclick="switchCompanySubTab('LOGIN')">🔑 គណនីមានស្រាប់</button>
+                    <button class="btn btn-gray btn-sm" id="subTabRequestBtn" style="flex:1;" onclick="switchCompanySubTab('REQUEST')">📝 ស្នើគណនីថ្មី</button>
+                </div>
+
+                <div id="subTabLoginArea">
+                    <div class="form-group">
+                        <label>Username (Bot ផ្តល់ជូន):</label>
+                        <input type="text" id="compUsername" placeholder="ឧ. user_101">
+                    </div>
+                    <div class="form-group">
+                        <label>Password (ពាក្យសម្ងាត់):</label>
+                        <input type="password" id="compPassword" placeholder="••••••••">
+                    </div>
+                </div>
+
+                <div id="subTabRequestArea" style="display:none;">
+                    <div class="form-group">
+                        <label>ឈ្មោះពេញ / ឈ្មោះក្រុមហ៊ុន:</label>
+                        <input type="text" id="reqFullName" placeholder="ឧ. សុខ មករា (ក្រុមហ៊ុន ABC)">
+                    </div>
+                    <div class="form-group">
+                        <label>លេខទូរស័ព្ទទំនាក់ទំនង:</label>
+                        <input type="text" id="reqPhone" placeholder="096XXXXXXX">
+                    </div>
+                    <button class="btn btn-orange btn-sm" style="width:100%; margin-top:4px;" onclick="submitAccountRequestToBot()">📩 ផ្ញើសំណើស្នើសុំគណនីទៅ Bot</button>
+                </div>
+            </div>
+
+            <button class="btn btn-blue" id="btnMainConfirmAuth" style="margin-top:10px; padding:12px; width:100%;" onclick="confirmAuthAndStart()">✅ ព្រមព្រៀង & ចាប់ផ្តើមប្រើប្រាស់</button>
+        </div>
+    </div>
+
+    <!-- MAIN HEADER -->
+    <div class="top-banner">
+        <span>📋 Sales Planner Pro</span>
+        <div class="user-pill">
+            <span id="topUserDisplay">👤 Telegram User</span>
+        </div>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('missionTab', this)">🚀 បេសកកម្ម</button>
+        <button class="tab-btn" onclick="switchTab('visitTab', this)">📍 ជួបផ្ទាល់</button>
+        <button class="tab-btn" onclick="switchTab('onlineTab', this)">💻 អនឡាញ</button>
+        <button class="tab-btn" onclick="switchTab('contactTab', this)">📇 ទំនាក់ទំនង</button>
+        <button class="tab-btn" onclick="switchTab('appointTab', this)">📅 ណាត់ជួប</button>
+        <button class="tab-btn" onclick="switchTab('reportTab', this)">📊 របាយការណ៍</button>
+    </div>
+
+    <div class="container">
+        <!-- TAB 1: MISSION TRACKER & MAPS ROUTE -->
+        <div id="missionTab" class="tab-content">
+            <div id="missionReportCaptureArea" class="card">
+                <h3>🚀 តាមដានបេសកកម្ម និងខ្សែផ្លូវ Maps ជាក់ស្តែង</h3>
+                
+                <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <div style="display: flex; gap: 8px;">
+                        <button id="btnStartMission" class="btn" style="width:100%;" onclick="startMission()">▶ ចុចផ្តើមការងារ</button>
+                        <button id="btnEndMission" class="btn btn-red" style="width:100%; display:none;" onclick="endMission()">⏹ ចុចបញ្ចប់ការងារ</button>
+                    </div>
+                </div>
+
+                <div id="missionStatusBox" style="margin-top: 10px; font-size: 12px; font-weight: bold; color:#020617;">ស្ថានភាព: មិនទាន់ចាប់ផ្តើមបេសកកម្ម</div>
+
+                <div class="mission-metrics-badge">
+                    <div>🛣️ ចម្ងាយសរុប៖ <span id="missionLiveDistance" style="color:#2563eb;">0.00 km</span></div>
+                    <div>⏱️ រយៈពេល៖ <span id="missionLiveDuration" style="color:#ea580c;">00:00:00</span></div>
+                </div>
+
+                <div id="mapWrapper" style="position:relative;">
+                    <div id="missionMapContainer">
+                        <div class="compass-box">
+                            <span>🧭 <span id="compassHeadingText">ជើង (0°)</span></span>
+                            <button onclick="requestCompassPermission()" style="background:#2563eb; color:white; border:none; padding:2px 6px; border-radius:10px; font-size:10px; cursor:pointer;">⚡ Sensor</button>
+                        </div>
+                        <button class="my-location-btn-map" onclick="centerMissionMapToMyLocation()">🎯 ទីតាំងខ្ញុំ</button>
+                    </div>
+                </div>
+
+                <div class="map-legend">
+                    <div class="legend-item"><span class="legend-color" style="background:#dc2626;"></span> ផ្លូវថ្ងៃនេះ (Today)</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#fca5a5;"></span> ផ្លូវមុនៗ (Past Routes)</div>
+                </div>
+
+                <div style="background:#eff6ff; border:1.5px solid var(--accent); padding:10px; border-radius:8px; margin-top:8px; font-size:12px; font-weight:bold; color:#1e40af; display:flex; justify-content:space-between; align-items:center;">
+                    <div id="currentBoundaryInfo">📍 ទីតាំងបច្ចុប្បន្ន: កំពុងស្កែន...</div>
+                    <button class="btn btn-blue btn-sm" onclick="copyCurrentAddress()">📋 Copy អាសយដ្ឋាន</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: VISIT (ជួបផ្ទាល់) -->
+        <div id="visitTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3 id="visitFormTitle">📍 បញ្ចូលអតិថិជនជួបផ្ទាល់</h3>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-orange btn-sm" onclick="toggleForm('targetReportModal')">🎯 Target & របាយការណ៍</button>
+                        <button class="btn-plus" onclick="toggleForm('visitForm')">+</button>
+                    </div>
+                </div>
+                
+                <div id="visitForm" style="display:none; margin-top: 10px;">
+                    <input type="hidden" id="editVisitIndex" value="-1">
+                    
+                    <div class="form-group" style="background:#e0f2fe; padding:10px; border-radius:8px; border:1.5px solid #bae6fd;">
+                        <label style="color:#0369a1;">🔍 ស្វែងរក & ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <input type="text" id="searchDropdownVisit" placeholder="🔍 វាយឈ្មោះ ឬលេខទូរស័ព្ទ..." onkeyup="filterContactDropdown('visit')" style="margin-bottom:6px; background:#fff !important;">
+                        <select id="selectContactVisit" onchange="autoFillContact('visit')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="custName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>ទីតាំង (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="custAddress" placeholder="ឧ. ផ្លូវ 271 ឬ ភូមិ១"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ</label><input type="text" id="custPhone" placeholder="លេខទូរស័ព្ទ"></div>
+                    
+                    <div style="background:#f0fdf4; border:1px solid #16a34a; padding:10px; border-radius:8px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="color:#166534; margin:0;">🛒 បញ្ជីទំនិញលក់បាន (បូកសរុប):</label>
+                            <button class="btn btn-blue btn-sm" onclick="openAddSalesItemModal('visit')">🛒 + បន្ថែមទំនិញលក់បាន</button>
+                        </div>
+                        <div id="visitItemsListBox" class="items-list-box"><div style="color:#64748b; font-size:11px; text-align:center;">មិនទាន់មានទំនិញត្រូវបន្ថែម</div></div>
+                        
+                        <div class="form-group" style="margin-top:8px; margin-bottom:6px;">
+                            <label id="lblSalesAmount">💰 ទំហំការលក់សរុប ($):</label>
+                            <input type="number" id="custSalesAmount" placeholder="0.00" readonly style="background:#e2e8f0 !important;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label id="lblCollectAmount">💵 ចំនួនប្រមូលលុយ/ប្រមូលបំណុល ($):</label>
+                            <input type="number" id="custCollectAmount" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎯 លទ្ធផលសន្ទនា / កម្រិតចាប់អារម្មណ៍</label>
+                        <select id="custInterest">
+                            <option value="INTERESTED">✅ ចាប់អារម្មណ៍ (Interested)</option>
+                            <option value="NOT_INTERESTED">❌ មិនចាប់អារម្មណ៍ (Not Interested)</option>
+                            <option value="THINKING">⏳ កំពុងគិតគូរ (Thinking)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>📝 ហេតុផល / ចំណាំបន្ថែម</label><textarea id="custReason" rows="2" placeholder="ឧ. ត្រូវការពិគ្រោះជាមួយគ្រួសារ..."></textarea></div>
+
+                    <div class="form-group">
+                        <label>📍 Google Maps Link / ទីតាំង GPS</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="custLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue btn-sm" style="width:90px;" onclick="getGPSLocation('custLocation', 'custAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-blue" id="saveVisitBtn" style="flex:1;" onclick="saveCustomer()">រក្សាទុក</button>
+                        <button class="btn btn-gray" id="cancelVisitBtn" style="display:none;" onclick="resetVisitForm()">បោះបង់</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <input type="text" id="searchVisitInput" placeholder="🔍 ស្វែងរកក្នុងបញ្ជីជួបផ្ទាល់..." onkeyup="loadCustomers()" style="margin-bottom:10px;">
+                <div id="customerListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 3: ONLINE (អនឡាញ) -->
+        <div id="onlineTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3 id="onlineFormTitle">💻 បញ្ចូលអតិថិជនអនឡាញ</h3>
+                    <button class="btn-plus" onclick="toggleForm('onlineForm')">+</button>
+                </div>
+                <div id="onlineForm" style="display:none; margin-top: 10px;">
+                    <input type="hidden" id="editOnlineIndex" value="-1">
+                    
+                    <div class="form-group" style="background:#e0f2fe; padding:10px; border-radius:8px; border:1.5px solid #bae6fd;">
+                        <label style="color:#0369a1;">🔍 ស្វែងរក & ជ្រើសរើសពីបញ្ជីទំនាក់ទំនងដែលមានស្រាប់៖</label>
+                        <input type="text" id="searchDropdownOnline" placeholder="🔍 វាយឈ្មោះ ឬលេខទូរស័ព្ទ..." onkeyup="filterContactDropdown('online')" style="margin-bottom:6px; background:#fff !important;">
+                        <select id="selectContactOnline" onchange="autoFillContact('online')">
+                            <option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="onlineCustName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន</label><input type="text" id="onlineCustAddress" placeholder="ឧ. ផ្លូវ 271"></div>
+                    
+                    <div style="background:#f0fdf4; border:1px solid #16a34a; padding:10px; border-radius:8px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <label style="color:#166534; margin:0;">🛒 បញ្ជីទំនិញលក់បាន (អនឡាញ):</label>
+                            <button class="btn btn-blue btn-sm" onclick="openAddSalesItemModal('online')">🛒 + បន្ថែមទំនិញលក់បាន</button>
+                        </div>
+                        <div id="onlineItemsListBox" class="items-list-box"><div style="color:#64748b; font-size:11px; text-align:center;">មិនទាន់មានទំនិញត្រូវបន្ថែម</div></div>
+
+                        <div class="form-group" style="margin-top:8px; margin-bottom:6px;">
+                            <label>💰 ទំហំការលក់អនឡាញសរុប ($):</label>
+                            <input type="number" id="onlineSalesAmount" placeholder="0.00" readonly style="background:#e2e8f0 !important;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label>💵 ប្រមូលប្រាក់/កក់ ($):</label>
+                            <input type="number" id="onlineCollectAmount" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎯 លទ្ធផលសន្ទនា / កម្រិតចាប់អារម្មណ៍</label>
+                        <select id="onlineInterest">
+                            <option value="INTERESTED">✅ ចាប់អារម្មណ៍ (Interested)</option>
+                            <option value="NOT_INTERESTED">❌ មិនចាប់អារម្មណ៍ (Not Interested)</option>
+                            <option value="THINKING">⏳ កំពុងគិតគូរ (Thinking)</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>📝 ហេតុផល / ចំណាំបន្ថែម</label><textarea id="onlineReason" rows="2" placeholder="ឧ. សុំគិតមើលសិន..."></textarea></div>
+
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-blue" id="saveOnlineBtn" style="flex:1;" onclick="saveOnlineItem()">រក្សាទុក</button>
+                        <button class="btn btn-gray" id="cancelOnlineBtn" style="display:none;" onclick="resetOnlineForm()">បោះបង់</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <input type="text" id="searchOnlineInput" placeholder="🔍 ស្វែងរកក្នុងបញ្ជីអនឡាញ..." onkeyup="loadOnlineItems()" style="margin-bottom:10px;">
+                <div id="onlineItemListContainer"></div>
+            </div>
+        </div>
+
+        <!-- TARGET & SALES REPORT MODAL/SECTION -->
+        <div id="targetReportModal" class="card" style="display:none; background:#f0f9ff; border-color:#0284c7;">
+            <div class="card-header-flex">
+                <h3 style="border-left-color:#0284c7;">🎯 កំណត់ Target & របាយការណ៍លក់/ប្រមូលលុយ</h3>
+                <button class="btn btn-red btn-sm" onclick="toggleForm('targetReportModal')">✖ បិទ</button>
+            </div>
+            
+            <div style="background:#fff; padding:10px; border-radius:8px; border:1px solid var(--border); margin-bottom:10px;">
+                <div style="font-weight:bold; color:#0369a1; margin-bottom:6px;">⚙️ កែប្រែ Target ប្រចាំខែ៖</div>
+                <div class="form-group">
+                    <label id="lblTargetSales">Target លក់ / ទម្លាក់ឥណទាន ($):</label>
+                    <input type="number" id="inputTargetSales" placeholder="10000">
+                </div>
+                <div class="form-group">
+                    <label id="lblTargetCollect">Target ប្រមូលលុយ / ការប្រាក់ ($):</label>
+                    <input type="number" id="inputTargetCollect" placeholder="8000">
+                </div>
+                <button class="btn btn-blue btn-sm" style="width:100%;" onclick="saveTargetSettings()">💾 រក្សាទុក Target</button>
+            </div>
+
+            <div style="font-weight:bold; color:#020617; margin-bottom:4px;">📊 របាយការណ៍លក់ជាក់ស្តែង (ថ្ងៃ / ខែ)៖</div>
+            <div class="report-grid">
+                <div class="report-card-mini">
+                    <div style="font-size:11px;">លក់ថ្ងៃនេះ</div>
+                    <div class="val" id="valTodaySales">$0</div>
+                </div>
+                <div class="report-card-mini">
+                    <div style="font-size:11px;">ប្រមូលលុយថ្ងៃនេះ</div>
+                    <div class="val" id="valTodayCollect">$0</div>
+                </div>
+                <div class="report-card-mini">
+                    <div style="font-size:11px;">លក់ខែនេះ</div>
+                    <div class="val" id="valMonthSales">$0</div>
+                </div>
+                <div class="report-card-mini">
+                    <div style="font-size:11px;">ប្រមូលលុយខែនេះ</div>
+                    <div class="val" id="valMonthCollect">$0</div>
+                </div>
+            </div>
+
+            <div style="margin-top:10px; font-size:11.5px; background:#e0f2fe; padding:8px; border-radius:6px; font-weight:bold; color:#0369a1;" id="targetProgressDisplay">
+                📈 សម្រេច Target លក់: 0% | សម្រេច Target ប្រមូល: 0%
+            </div>
+            <div class="target-bar-bg"><div id="targetProgressBar" class="target-bar-fill"></div></div>
+        </div>
+
+        <!-- TAB 4: CONTACTS -->
+        <div id="contactTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex" style="gap:8px;">
+                    <h3 id="contactFormTitle" style="white-space:nowrap;">📇 ទំនាក់ទំនង</h3>
+                    <div style="display:flex; gap:6px; width:100%; justify-content:flex-end; align-items:center;">
+                        <input type="text" id="searchContactInput" placeholder="🔍 ស្វែងរកឈ្មោះ..." onkeyup="filterContacts()" style="padding:6px 10px; font-size:12px; margin:0;">
+                        <button class="btn-plus" onclick="toggleForm('contactForm')" title="បន្ថែមទំនាក់ទំនងថ្មី">+</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-blue btn-sm" style="width:100%; margin-bottom:8px; background:#15803d;" onclick="exportContactsToExcelCSV()">📥 ទាញយកបញ្ជីទំនាក់ទំនងជា Excel (.csv)</button>
+
+                <div id="contactForm" style="display:none; margin-top: 10px;">
+                    <input type="hidden" id="editContactIndex" value="-1">
+                    <div class="form-group"><label>ឈ្មោះទំនាក់ទំនង</label><input type="text" id="manualContactName" placeholder="ឈ្មោះ"></div>
+                    <div class="form-group"><label>អាសយដ្ឋាន (ផ្លូវ/ភូមិ/ឃុំ)</label><input type="text" id="manualContactAddress" placeholder="ឧ. ផ្លូវជាតិលេខ 3"></div>
+                    <div class="form-group"><label>លេខទូរស័ព្ទ/ព័ត៌មាន</label><input type="text" id="manualContactInfo" placeholder="លេខទូរស័ព្ទ"></div>
+                    <div class="form-group">
+                        <label>📍 Google Maps Link (ទីតាំង GPS)</label>
+                        <div style="display:flex; gap:4px;">
+                            <input type="text" id="manualContactLocation" placeholder="https://maps.google.com/?q=...">
+                            <button class="btn btn-blue btn-sm" style="width:90px;" onclick="getGPSLocation('manualContactLocation', 'manualContactAddress')">🎯 GPS</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="btn btn-blue" id="saveContactBtn" style="flex:1;" onclick="saveManualContact()">រក្សាទុកទំនាក់ទំនង</button>
+                        <button class="btn btn-gray" id="cancelContactBtn" style="display:none;" onclick="resetContactForm()">បោះបង់</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="group-container" id="locationGroupsContainer"></div>
+                <div id="allContactsContainer"></div>
+            </div>
+        </div>
+
+        <!-- TAB 5: APPOINTMENTS -->
+        <div id="appointTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <div class="card-header-flex">
+                    <h3>📅 ការណាត់ជួប</h3>
+                    <button class="btn-plus" onclick="toggleForm('appointForm')">+</button>
+                </div>
+                <div id="appointForm" style="display:none; margin-top: 10px;">
+                    <div class="form-group"><label>ឈ្មោះអតិថិជន</label><input type="text" id="appCustName" placeholder="ឈ្មោះអតិថិជន"></div>
+                    <div class="form-group"><label>🎯 គោលបំណងណាត់ជួប (Purpose)</label><input type="text" id="appPurpose" placeholder="ឧ. ចុះហត្ថលេខាកិច្ចសន្យា"></div>
+                    <div class="form-group"><label>កាលបរិច្ឆេទ & ម៉ោង</label><input type="datetime-local" id="appDateTime"></div>
+                    <div class="form-group">
+                        <label>🔔 សម្លេងរោទ៍ប្រកាស (Sound Tone)</label>
+                        <select id="appSoundTone">
+                            <option value="beep">🔊 Beep Alert (ស្តង់ដារ)</option>
+                            <option value="chime">🔔 Chime Bell (ផ្លុំកញ្ចែ/ជួង)</option>
+                            <option value="siren">🚨 Urgent Alarm (អាសន្ន)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-blue" style="width:100%;" onclick="saveAppointment()">រក្សាទុកការណាត់ជួប</button>
+                </div>
+            </div>
+            <div class="card"><div id="appointmentListContainer"></div></div>
+        </div>
+
+        <!-- TAB 6: REPORTS & CLOUD DATABASE BACKUP -->
+        <div id="reportTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h3>📊 របាយការណ៍សង្ខេបប្រចាំថ្ងៃ</h3>
+                <div id="reportSummaryBox" style="font-size: 12.5px; line-height: 1.6; background: #e0f2fe; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-weight:600; color:#020617; white-space: pre-line;"></div>
+                <button class="btn btn-orange" style="width:100%;" onclick="shareReportTextToTelegram()">💬 ចែករំលែករបាយការណ៍ទៅ Telegram</button>
+            </div>
+
+            <!-- REALTIME CLOUD SYNC SECTION -->
+            <div class="card" style="background:#f0fdf4; border-color:#16a34a;">
+                <h3 style="border-left-color:#16a34a;">☁️ ប្រព័ន្ធ Telegram Cloud Sync (ស្វ័យប្រវត្តិ)</h3>
+                <p style="font-size:11.5px; color:#15803d; line-height:1.5;">
+                    ទិន្នន័យត្រូវបាន Sync ស្វ័យប្រវត្តិជាមួយ Telegram Cloud មិនបាត់បង់ និងអាចប្រើនៅលើគ្រប់ទូរស័ព្ទ ឬកុំព្យូទ័រ ដែលប្រើ Telegram តែមួយ។
+                </p>
+                <div style="display:flex; gap:8px;">
+                    <button class="btn btn-blue btn-sm" style="flex:1;" onclick="saveAndSyncState('manual')">☁️️ រក្សាទុកទៅ Cloud (Sync)</button>
+                    <button class="btn btn-orange btn-sm" style="flex:1;" onclick="autoPullFromTelegramCloud()">🔄 ទាញយកពី Cloud (Restore)</button>
+                </div>
+                <div id="cloudSyncStatus" style="font-size:11px; font-weight:bold; color:#0369a1; margin-top:6px;"></div>
+            </div>
+
+            <div class="card">
+                <h3>🏢 ព័ត៌មានគណនី & Telegram Login</h3>
+                <p style="font-size:12px; color:#020617;">
+                    <b>ឈ្មោះគណនី:</b> <span id="accountUserDisplay" style="color:#2563eb; font-weight:bold;">---</span><br>
+                    <b>ប្រភេទគណនី:</b> <span id="accountTypeDisplay" style="color:#2563eb; font-weight:bold;">---</span><br>
+                    <b>តួនាទី:</b> <span id="accountRoleDisplay" style="color:#16a34a; font-weight:bold;">---</span><br>
+                    <b>User ID:</b> <span id="userIdDisplay" style="color:#ea580c; font-weight:bold;">---</span>
+                </p>
+                <button class="btn btn-blue btn-sm" onclick="reopenOnboarding()">⚙️ ផ្លាស់ប្តូរប្រភេទគណនី ឬ Login ឡើងវិញ</button>
+            </div>
+
+            <div class="card" style="background:#fff7ed; border-color:#ea580c;">
+                <h3 style="border-left-color:#ea580c;">💬 ជំនួយបច្ចេកទេស & ទំនាក់ទំនងផ្ទាល់</h3>
+                <div style="font-size:12px; font-weight:bold; margin:10px 0; line-height:1.8; color:#020617;">
+                    👤 ឈ្មោះ: <b>មុំ សាមាន</b><br>
+                    💬 Telegram: <a href="https://t.me/SameanMom168" target="_blank" style="color:#2563eb;">@SameanMom168</a><br>
+                    📞 ទូរស័ព្ទ: <a href="tel:0964444679" style="color:#2563eb;">0964444679</a>
+                </div>
+                <a href="https://t.me/SameanMom168" target="_blank" class="btn btn-orange" style="width:100%; text-decoration:none;">💬 ទាក់ទងតាម Telegram ផ្ទាល់</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TELEGRAM INITIALIZATION
+        let tg = window.Telegram ? window.Telegram.WebApp : null;
+        let tgUser = null;
+
+        if (tg) {
+            try {
+                tg.ready();
+                tg.expand();
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    tgUser = tg.initDataUnsafe.user;
+                }
+            } catch (e) { console.warn("Telegram WebApp Error:", e); }
+        }
+
+        let selectedAuthMode = 'INDIVIDUAL';
+        let currentSalesModalTarget = 'visit';
+        let tempSalesItems = [];
+
+        function cleanAddress(addr) {
+            if (!addr) return '';
+            return addr.replaceAll(',', '').replaceAll('  ', ' ').trim();
+        }
+
+        function detectTelegramAccount() {
+            let nameBox = document.getElementById('tgAuthProfileName');
+            if (tgUser) {
+                let name = `${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username || 'Telegram User';
+                nameBox.innerText = `👤 ${name} (ID: ${tgUser.id})`;
+            } else {
+                nameBox.innerText = `👤 Telegram User (Guest Web Mode)`;
+            }
+        }
+
+        function checkFirstTimeUser() {
+            let hasCompleted = localStorage.getItem('app_auth_completed');
+            if (!hasCompleted) {
+                document.getElementById('onboardingModal').style.display = 'flex';
+                detectTelegramAccount();
+            } else {
+                document.getElementById('onboardingModal').style.display = 'none';
+            }
+        }
+
+        function selectAuthMode(mode) {
+            selectedAuthMode = mode;
+            document.getElementById('optionIndividual').classList.remove('selected');
+            document.getElementById('optionCompany').classList.remove('selected');
+
+            if (mode === 'INDIVIDUAL') {
+                document.getElementById('optionIndividual').classList.add('selected');
+                document.getElementById('individualRoleBox').style.display = 'block';
+                document.getElementById('companyAuthForm').style.display = 'none';
+                document.getElementById('btnMainConfirmAuth').style.display = 'block';
+            } else {
+                document.getElementById('optionCompany').classList.add('selected');
+                document.getElementById('individualRoleBox').style.display = 'none';
+                document.getElementById('companyAuthForm').style.display = 'block';
+            }
+        }
+
+        function switchCompanySubTab(tab) {
+            document.getElementById('subTabLoginArea').style.display = 'none';
+            document.getElementById('subTabRequestArea').style.display = 'none';
+            document.getElementById('subTabLoginBtn').className = 'btn btn-gray btn-sm';
+            document.getElementById('subTabRequestBtn').className = 'btn btn-gray btn-sm';
+
+            if (tab === 'LOGIN') {
+                document.getElementById('subTabLoginArea').style.display = 'block';
+                document.getElementById('subTabLoginBtn').className = 'btn btn-blue btn-sm';
+                document.getElementById('btnMainConfirmAuth').style.display = 'block';
+            } else if (tab === 'REQUEST') {
+                document.getElementById('subTabRequestArea').style.display = 'block';
+                document.getElementById('subTabRequestBtn').className = 'btn btn-blue btn-sm';
+                document.getElementById('btnMainConfirmAuth').style.display = 'none';
+            }
+        }
+
+        function confirmAuthAndStart() {
+            let displayName = tgUser ? (`${tgUser.first_name || ''} ${tgUser.last_name || ''}`.trim() || tgUser.username) : 'Individual User';
+            let role = 'SALES';
+
+            if (selectedAuthMode === 'INDIVIDUAL') {
+                role = document.getElementById('indUserRole').value;
+            } else if (selectedAuthMode === 'COMPANY') {
+                let u = document.getElementById('compUsername').value.trim();
+                let p = document.getElementById('compPassword').value.trim();
+
+                if (!u || !p) { alert("សូមបញ្ចូល Username និង Password ក្រុមហ៊ុន!"); return; }
+                displayName = `Company User (${u})`;
+            }
+
+            localStorage.setItem('sales_account_mode', selectedAuthMode);
+            localStorage.setItem('sales_user_role', role);
+            localStorage.setItem('sales_user_display_name', displayName);
+            localStorage.setItem('app_auth_completed', 'true');
+
+            document.getElementById('onboardingModal').style.display = 'none';
+            updateProfileDisplay();
+            adjustUIByRole();
+        }
+
+        function reopenOnboarding() { 
+            document.getElementById('onboardingModal').style.display = 'flex'; 
+            detectTelegramAccount();
+        }
+
+        function updateProfileDisplay() {
+            let mode = localStorage.getItem('sales_account_mode') || 'INDIVIDUAL';
+            let role = localStorage.getItem('sales_user_role') || 'SALES';
+            let name = localStorage.getItem('sales_user_display_name') || 'Telegram User';
+            let uId = tgUser ? tgUser.id : (localStorage.getItem('sales_user_uuid') || 'USER_GUEST');
+
+            document.getElementById('topUserDisplay').innerText = `👤 ${name}`;
+            document.getElementById('accountUserDisplay').innerText = name;
+            document.getElementById('accountTypeDisplay').innerText = mode === 'COMPANY' ? '🏢 ក្រុមហ៊ុន (Enterprise)' : '👤 ឯកជន (Individual)';
+            document.getElementById('accountRoleDisplay').innerText = role === 'BANK' ? '🏦 បុគ្គលិក MFI/ធនាគារ' : '🛍️ បុគ្គលិកលក់ (Sales)';
+            document.getElementById('userIdDisplay').innerText = uId;
+        }
+
+        function adjustUIByRole() {
+            let role = localStorage.getItem('sales_user_role') || 'SALES';
+            if (role === 'BANK') {
+                document.getElementById('lblSalesAmount').innerText = "💰 ទំហំទម្លាក់ឥណទានសរុប ($):";
+                document.getElementById('lblCollectAmount').innerText = "💵 ចំនួនប្រមូលដើម/ការប្រាក់ ($):";
+                document.getElementById('lblTargetSales').innerText = "Target ទម្លាក់ឥណទាន ($):";
+                document.getElementById('lblTargetCollect').innerText = "Target ប្រមូលការប្រាក់/ដើម ($):";
+            } else {
+                document.getElementById('lblSalesAmount').innerText = "💰 ទំហំការលក់សរុប ($):";
+                document.getElementById('lblCollectAmount').innerText = "💵 ចំនួនប្រមូលប្រាក់/កក់ ($):";
+                document.getElementById('lblTargetSales').innerText = "Target លក់ប្រចាំខែ ($):";
+                document.getElementById('lblTargetCollect').innerText = "Target ប្រមូលលុយ ($):";
+            }
+            loadTargetSettings();
+            calculateReportTotals();
+        }
+
+        /* ----------------------------------------------------
+           REALTIME MULTI-DEVICE TELEGRAM CLOUD SYNC (OPTIMIZED)
+           ---------------------------------------------------- */
+        let userId = tgUser ? tgUser.id.toString() : (localStorage.getItem('sales_user_uuid') || ('USER_' + Math.random().toString(36).substr(2, 9).toUpperCase()));
+        localStorage.setItem('sales_user_uuid', userId);
+
+        let customers = JSON.parse(localStorage.getItem('sales_customers')) || [];
+        let onlineItems = JSON.parse(localStorage.getItem('sales_online')) || [];
+        let manualContacts = JSON.parse(localStorage.getItem('sales_manual_contacts')) || [];
+        let appointments = JSON.parse(localStorage.getItem('sales_appoint')) || [];
+        let targetSettings = JSON.parse(localStorage.getItem('sales_targets')) || { targetSales: 10000, targetCollect: 8000 };
+        
+        const syncChannel = new BroadcastChannel('sales_planner_sync_' + userId);
+        let lastSyncHash = '';
+
+        function saveAndSyncState(source = 'local') {
+            const dataState = {
+                customers,
+                onlineItems,
+                manualContacts,
+                appointments,
+                targetSettings,
+                activeMission: localStorage.getItem('sales_active_mission'),
+                missionHistory: localStorage.getItem('sales_mission_history'),
+                lastUpdated: Date.now()
+            };
+
+            const stateString = JSON.stringify(dataState);
+            if (stateString === lastSyncHash) return;
+            lastSyncHash = stateString;
+
+            localStorage.setItem('sales_customers', JSON.stringify(customers));
+            localStorage.setItem('sales_online', JSON.stringify(onlineItems));
+            localStorage.setItem('sales_manual_contacts', JSON.stringify(manualContacts));
+            localStorage.setItem('sales_appoint', JSON.stringify(appointments));
+            localStorage.setItem('sales_targets', JSON.stringify(targetSettings));
+
+            if (source !== 'broadcast') {
+                syncChannel.postMessage(dataState);
+            }
+
+            // Sync ទៅ Telegram Cloud Storage
+            if (tg && tg.CloudStorage) {
+                try {
+                    tg.CloudStorage.setItem('app_db_' + userId, stateString, (err, storeSuccess) => {
+                        if (storeSuccess && source === 'manual') {
+                            document.getElementById('cloudSyncStatus').innerText = "✅ រក្សាទុក និង Sync ទៅ Telegram Cloud រួចរាល់!";
+                        }
+                    });
+                } catch (e) {}
+            }
+        }
+
+        syncChannel.onmessage = (event) => {
+            if (event.data) applyDataState(event.data);
+        };
+
+        function applyDataState(data) {
+            if (!data) return;
+            let updated = false;
+            if (data.customers) { customers = data.customers; localStorage.setItem('sales_customers', JSON.stringify(customers)); updated = true; }
+            if (data.onlineItems) { onlineItems = data.onlineItems; localStorage.setItem('sales_online', JSON.stringify(onlineItems)); updated = true; }
+            if (data.manualContacts) { manualContacts = data.manualContacts; localStorage.setItem('sales_manual_contacts', JSON.stringify(manualContacts)); updated = true; }
+            if (data.appointments) { appointments = data.appointments; localStorage.setItem('sales_appoint', JSON.stringify(appointments)); updated = true; }
+            if (data.targetSettings) { targetSettings = data.targetSettings; localStorage.setItem('sales_targets', JSON.stringify(targetSettings)); updated = true; }
+
+            if (updated) refreshCurrentTabUI();
+        }
+
+        function autoPullFromTelegramCloud() {
+            if (tg && tg.CloudStorage) {
+                tg.CloudStorage.getItem('app_db_' + userId, (err, val) => {
+                    if (!err && val && val !== lastSyncHash) {
+                        try {
+                            const cloudData = JSON.parse(val);
+                            lastSyncHash = val;
+                            applyDataState(cloudData);
+                            let status = document.getElementById('cloudSyncStatus');
+                            if (status) status.innerText = "🔄 ទាញយកទិន្នន័យពី Telegram Cloud ជោគជ័យ!";
+                        } catch (e) {}
+                    }
+                });
+            }
+        }
+
+        // កែសម្រួល Interval មក 8 វិនាទី ដើម្បីការពារការគាំង Performance/CPU lag
+        setInterval(autoPullFromTelegramCloud, 8000);
+
+        function refreshCurrentTabUI() {
+            loadAllContacts();
+            populateContactDropdowns();
+            loadCustomers();
+            loadOnlineItems();
+            loadAppointments();
+            calculateReportTotals();
+            if (missionMap) {
+                renderSavedCustomerMarkers();
+                renderHistoricalRoutes();
+            }
+        }
+
+        /* ----------------------------------------------------
+           MODAL សម្រាប់បន្ថែមទំនិញលក់បាន (Multi-Items Sales)
+           ---------------------------------------------------- */
+        function openAddSalesItemModal(targetTab) {
+            currentSalesModalTarget = targetTab;
+            document.getElementById('modalItemName').value = '';
+            document.getElementById('modalItemPrice').value = '';
+            document.getElementById('addSalesItemModal').style.display = 'flex';
+        }
+
+        function closeAddSalesItemModal() {
+            document.getElementById('addSalesItemModal').style.display = 'none';
+        }
+
+        function confirmAddSalesItem() {
+            let name = document.getElementById('modalItemName').value.trim();
+            let price = parseFloat(document.getElementById('modalItemPrice').value) || 0;
+
+            if (!name) { alert("សូមបញ្ចូលឈ្មោះទំនិញ!"); return; }
+
+            tempSalesItems.push({ name, price });
+            renderTempSalesItemsList();
+            closeAddSalesItemModal();
+        }
+
+        function removeTempSalesItem(index) {
+            tempSalesItems.splice(index, 1);
+            renderTempSalesItemsList();
+        }
+
+        function renderTempSalesItemsList() {
+            let containerId = currentSalesModalTarget === 'visit' ? 'visitItemsListBox' : 'onlineItemsListBox';
+            let amountInputId = currentSalesModalTarget === 'visit' ? 'custSalesAmount' : 'onlineSalesAmount';
+            
+            let container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (tempSalesItems.length === 0) {
+                container.innerHTML = `<div style="color:#64748b; font-size:11px; text-align:center;">មិនទាន់មានទំនិញត្រូវបន្ថែម</div>`;
+                document.getElementById(amountInputId).value = '0.00';
+                return;
+            }
+
+            let html = '';
+            let totalSum = 0;
+            tempSalesItems.forEach((item, idx) => {
+                totalSum += item.price;
+                html += `
+                    <div class="item-tag">
+                        <span><b>${item.name}</b> ($${item.price.toFixed(2)})</span>
+                        <span style="color:#dc2626; font-weight:bold; cursor:pointer;" onclick="removeTempSalesItem(${idx})">✖</span>
+                    </div>`;
+            });
+
+            container.innerHTML = html;
+            document.getElementById(amountInputId).value = totalSum.toFixed(2);
+        }
+
+        /* ----------------------------------------------------
+           HAVERSINE FORMULA - គណនាចម្ងាយ (km) និង រយៈពេល
+           ---------------------------------------------------- */
+        function calculateDistanceInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function calculateMissionMetrics(missionObj) {
+            if (!missionObj || !missionObj.points || missionObj.points.length < 2) {
+                return { distanceKm: '0.00', durationText: '00:00:00', durationSeconds: 0 };
+            }
+
+            let totalDistance = 0;
+            for (let i = 0; i < missionObj.points.length - 1; i++) {
+                let p1 = missionObj.points[i];
+                let p2 = missionObj.points[i + 1];
+                totalDistance += calculateDistanceInKm(p1.lat, p1.lng, p2.lat, p2.lng);
+            }
+
+            let startTime = new Date(missionObj.points[0].time).getTime();
+            let endTime = missionObj.points[missionObj.points.length - 1].time ? 
+                          new Date(missionObj.points[missionObj.points.length - 1].time).getTime() : Date.now();
+            
+            let durationSeconds = Math.max(0, Math.floor((endTime - startTime) / 1000));
+            let hrs = Math.floor(durationSeconds / 3600);
+            let mins = Math.floor((durationSeconds % 3600) / 60);
+            let secs = durationSeconds % 60;
+
+            return {
+                distanceKm: totalDistance.toFixed(2),
+                durationText: `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`,
+                durationSeconds
+            };
+        }
+
+        let liveTimerInterval = null;
+
+        function updateLiveMissionMetrics() {
+            let active = JSON.parse(localStorage.getItem('sales_active_mission'));
+            if (active && active.points) {
+                let metrics = calculateMissionMetrics(active);
+                document.getElementById('missionLiveDistance').innerText = `${metrics.distanceKm} km`;
+                document.getElementById('missionLiveDuration').innerText = metrics.durationText;
+            } else {
+                document.getElementById('missionLiveDistance').innerText = `0.00 km`;
+                document.getElementById('missionLiveDuration').innerText = `00:00:00`;
+            }
+        }
+
+        let missionMap = null, watchId = null, currentMission = null, myLocationMarker = null;
+        let routePolylinesGroup = null, customerMarkersGroup = null;
+        let currentHeading = 0, currentRawAddress = '';
+
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).style.display = 'block'; btn.classList.add('active');
+            
+            if(tabId === 'contactTab') loadAllContacts();
+            if(tabId === 'visitTab' || tabId === 'onlineTab') populateContactDropdowns();
+            if(tabId === 'visitTab') loadCustomers();
+            if(tabId === 'onlineTab') loadOnlineItems();
+            if(tabId === 'appointTab') loadAppointments();
+            if(tabId === 'reportTab') generateReport();
+            if(tabId === 'missionTab') {
+                if (!missionMap) initMissionMap();
+                else {
+                    setTimeout(() => { missionMap.invalidateSize(); }, 200);
+                    renderSavedCustomerMarkers();
+                    renderHistoricalRoutes();
+                }
+                updateLiveMissionMetrics();
+            }
+        }
+
+        function toggleForm(id) {
+            let f = document.getElementById(id);
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        const compassArrowSVG = `
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="18" cy="18" r="16" fill="#2563eb" fill-opacity="0.25" stroke="#2563eb" stroke-width="1.5"/>
+                <polygon points="18,4 25,28 18,22 11,28" fill="#2563eb" stroke="#ffffff" stroke-width="1.5"/>
+            </svg>
+        `;
+
+        const compassIcon = L.divIcon({
+            className: 'user-heading-marker',
+            html: `<div id="headingArrowIcon" style="transform-origin: center center; width:36px; height:36px;">${compassArrowSVG}</div>`,
+            iconSize: [36, 36],
+            iconAnchor: [18, 18]
+        });
+
+        function initMissionMap() {
+            if (missionMap) return;
+            try {
+                missionMap = L.map('missionMapContainer', { zoomControl: false, preferCanvas: true }).setView([11.5564, 104.9282], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, crossOrigin: true }).addTo(missionMap);
+                
+                routePolylinesGroup = L.layerGroup().addTo(missionMap);
+                customerMarkersGroup = L.layerGroup().addTo(missionMap);
+                
+                centerMissionMapToMyLocation();
+                renderSavedCustomerMarkers();
+                renderHistoricalRoutes();
+                initDeviceOrientation();
+            } catch (err) {
+                console.error("Map Init Error:", err);
+            }
+        }
+
+        function initDeviceOrientation() {
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
+        }
+
+        function requestCompassPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission().then(state => {
+                    if (state === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation, true);
+                        alert("⚡ បើក Sensor ទិសដៅជោគជ័យ!");
+                    }
+                }).catch(console.error);
+            } else {
+                initDeviceOrientation();
+                alert("⚡ ស្កែន Sensor ទិសដៅរួចរាល់!");
+            }
+        }
+
+        function handleOrientation(event) {
+            let heading = event.webkitCompassHeading || (event.alpha ? (360 - event.alpha) : null);
+            if (heading !== null) {
+                currentHeading = Math.round(heading);
+                updateHeadingUI(currentHeading);
+            }
+        }
+
+        function updateHeadingUI(heading) {
+            let directions = ['ជើង (N)', 'កើត-ជើង (NE)', 'កើត (E)', 'កើត-ត្បូង (SE)', 'ត្បូង (S)', 'លិច-ត្បូង (SW)', 'លិច (W)', 'លិច-ជើង (NW)'];
+            let index = Math.round(heading / 45) % 8;
+            document.getElementById('compassHeadingText').innerText = `${directions[index]} (${heading}°)`;
+
+            let arrowElem = document.getElementById('headingArrowIcon');
+            if (arrowElem) arrowElem.style.transform = `rotate(${heading}deg)`;
+        }
+
+        function centerMissionMapToMyLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                    let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                    if (missionMap) {
+                        missionMap.setView([lat, lng], 16);
+                        if (myLocationMarker) myLocationMarker.setLatLng([lat, lng]);
+                        else myLocationMarker = L.marker([lat, lng], { icon: compassIcon }).addTo(missionMap);
+                        fetchAddressFromLatLng(lat, lng);
+                    }
+                }, () => {}, { enableHighAccuracy: true });
+            }
+        }
+
+        function renderSavedCustomerMarkers() {
+            if (!missionMap || !customerMarkersGroup) return;
+            customerMarkersGroup.clearLayers();
+            getAllUniqueContacts().forEach(c => {
+                if (c.location && c.location.includes('q=')) {
+                    let parts = c.location.split('q=')[1].split(',');
+                    if (parts.length === 2) {
+                        let lat = parseFloat(parts[0]), lng = parseFloat(parts[1]);
+                        if (!isNaN(lat) && !isNaN(lng)) {
+                            L.marker([lat, lng]).addTo(customerMarkersGroup)
+                                .bindPopup(`<b>👤 ${c.name}</b><br>📍 ${cleanAddress(c.address) || 'គ្មានទីតាំង'}<br>📞 ${c.phone || ''}`);
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHistoricalRoutes() {
+            if (!missionMap || !routePolylinesGroup) return;
+            routePolylinesGroup.clearLayers();
+
+            let history = JSON.parse(localStorage.getItem('sales_mission_history')) || [];
+            let todayStr = new Date().toISOString().slice(0, 10);
+
+            let active = JSON.parse(localStorage.getItem('sales_active_mission'));
+            if (active && active.points && active.points.length > 1) {
+                let latLngs = active.points.map(p => [p.lat, p.lng]);
+                L.polyline(latLngs, { color: '#dc2626', weight: 6, opacity: 0.9 }).addTo(routePolylinesGroup);
+            }
+
+            history.forEach(m => {
+                if (m.points && m.points.length > 1) {
+                    let isToday = (m.date === todayStr);
+                    let latLngs = m.points.map(p => [p.lat, p.lng]);
+                    L.polyline(latLngs, { 
+                        color: isToday ? '#dc2626' : '#fca5a5', 
+                        weight: isToday ? 5 : 3, 
+                        opacity: isToday ? 0.85 : 0.6 
+                    }).addTo(routePolylinesGroup);
+                }
+            });
+        }
+
+        function getGPSLocation(elementId, addressInputId = '') {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    let lat = position.coords.latitude, lon = position.coords.longitude;
+                    document.getElementById(elementId).value = `https://maps.google.com/?q=${lat},${lon}`;
+                    if (addressInputId) fetchAddressFromLatLng(lat, lon, addressInputId);
+                    alert("🎯 ចាប់យកទីតាំង GPS បានជោគជ័យ!");
+                });
+            }
+        }
+
+        function fetchAddressFromLatLng(lat, lng, targetInputId = '') {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=km`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.display_name) {
+                        let cleaned = cleanAddress(data.display_name);
+                        if (targetInputId) document.getElementById(targetInputId).value = cleaned;
+                        else {
+                            currentRawAddress = cleaned;
+                            document.getElementById('currentBoundaryInfo').innerHTML = `📍 <b>ទីតាំង:</b> ${cleaned}`;
+                        }
+                    }
+                }).catch(() => {});
+        }
+
+        function copyCurrentAddress() {
+            if (currentRawAddress) {
+                navigator.clipboard.writeText(currentRawAddress);
+                alert("📋 ចម្លងអាសយដ្ឋានបានជោគជ័យ!");
+            }
+        }
+
+        function initMissionTracking() {
+            let savedMission = localStorage.getItem('sales_active_mission');
+            if (savedMission) {
+                currentMission = JSON.parse(savedMission);
+                document.getElementById('btnStartMission').style.display = 'none';
+                document.getElementById('btnEndMission').style.display = 'block';
+                document.getElementById('missionStatusBox').innerText = "🟢 កំពុងបន្តកត់ត្រាបេសកកម្ម (Auto-Resumed)...";
+                renderHistoricalRoutes();
+                startGeolocationWatch();
+
+                if (!liveTimerInterval) {
+                    liveTimerInterval = setInterval(updateLiveMissionMetrics, 1000);
+                }
+            }
+        }
+
+        function startMission() {
+            if (!navigator.geolocation) return;
+            currentMission = { date: new Date().toISOString().slice(0, 10), startTime: new Date().toLocaleTimeString(), endTime: null, points: [] };
+            localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+            saveAndSyncState();
+
+            document.getElementById('btnStartMission').style.display = 'none';
+            document.getElementById('btnEndMission').style.display = 'block';
+            document.getElementById('missionStatusBox').innerText = "🟢 កំពុងកត់ត្រាបេសកកម្ម...";
+
+            startGeolocationWatch();
+
+            if (!liveTimerInterval) {
+                liveTimerInterval = setInterval(updateLiveMissionMetrics, 1000);
+            }
+        }
+
+        function startGeolocationWatch() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            watchId = navigator.geolocation.watchPosition((pos) => {
+                let lat = pos.coords.latitude, lng = pos.coords.longitude;
+                if (!currentMission) return;
+
+                let points = currentMission.points;
+                if (points.length > 0) {
+                    let lastPt = points[points.length - 1];
+                    let dist = calculateDistanceInKm(lat, lng, lastPt.lat, lastPt.lng);
+                    if (dist < 0.005) return; 
+                }
+
+                currentMission.points.push({ lat, lng, time: new Date().toISOString() });
+                localStorage.setItem('sales_active_mission', JSON.stringify(currentMission));
+                saveAndSyncState();
+
+                if (myLocationMarker && missionMap) myLocationMarker.setLatLng([lat, lng]);
+                renderHistoricalRoutes();
+                updateLiveMissionMetrics();
+
+            }, null, { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 });
+        }
+
+        function endMission() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+            if (liveTimerInterval) { clearInterval(liveTimerInterval); liveTimerInterval = null; }
+
+            if (currentMission) {
+                currentMission.endTime = new Date().toLocaleTimeString();
+                
+                let metrics = calculateMissionMetrics(currentMission);
+                currentMission.distanceKm = metrics.distanceKm;
+                currentMission.durationText = metrics.durationText;
+
+                let history = JSON.parse(localStorage.getItem('sales_mission_history')) || [];
+                history.push(currentMission);
+                localStorage.setItem('sales_mission_history', JSON.stringify(history));
+                localStorage.removeItem('sales_active_mission');
+                saveAndSyncState();
+            }
+
+            document.getElementById('btnStartMission').style.display = 'block';
+            document.getElementById('btnEndMission').style.display = 'none';
+            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មបានបញ្ចប់!";
+            renderHistoricalRoutes();
+            updateLiveMissionMetrics();
+        }
+
+        /* CONTACTS & CRUD LOGIC */
+        function getAllUniqueContacts() {
+            let map = new Map();
+            manualContacts.forEach(c => map.set(c.name.toLowerCase().trim(), c));
+            customers.forEach(c => {
+                if(c.name && !map.has(c.name.toLowerCase().trim())) {
+                    map.set(c.name.toLowerCase().trim(), { name: c.name, address: c.address, phone: c.phone, location: c.location });
+                }
+            });
+            return Array.from(map.values());
+        }
+
+        function populateContactDropdowns() {
+            let contacts = getAllUniqueContacts();
+            let vSel = document.getElementById('selectContactVisit');
+            let oSel = document.getElementById('selectContactOnline');
+            
+            let opts = '<option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>';
+            contacts.forEach(c => {
+                opts += `<option value="${c.name}">${c.name} ${c.phone ? '('+c.phone+')' : ''}</option>`;
+            });
+
+            if(vSel) vSel.innerHTML = opts;
+            if(oSel) oSel.innerHTML = opts;
+        }
+
+        function filterContactDropdown(type) {
+            let filter = document.getElementById(type === 'visit' ? 'searchDropdownVisit' : 'searchDropdownOnline').value.toLowerCase();
+            let sel = document.getElementById(type === 'visit' ? 'selectContactVisit' : 'selectContactOnline');
+            let contacts = getAllUniqueContacts();
+
+            let opts = '<option value="">-- ជ្រើសរើសទំនាក់ទំនង --</option>';
+            contacts.filter(c => c.name.toLowerCase().includes(filter) || (c.phone && c.phone.includes(filter))).forEach(c => {
+                opts += `<option value="${c.name}">${c.name} ${c.phone ? '('+c.phone+')' : ''}</option>`;
+            });
+            sel.innerHTML = opts;
+        }
+
+        function autoFillContact(type) {
+            let name = document.getElementById(type === 'visit' ? 'selectContactVisit' : 'selectContactOnline').value;
+            if(!name) return;
+            let c = getAllUniqueContacts().find(x => x.name === name);
+            if(c) {
+                if(type === 'visit') {
+                    document.getElementById('custName').value = c.name || '';
+                    document.getElementById('custAddress').value = cleanAddress(c.address) || '';
+                    document.getElementById('custPhone').value = c.phone || '';
+                    document.getElementById('custLocation').value = c.location || '';
+                } else {
+                    document.getElementById('onlineCustName').value = c.name || '';
+                    document.getElementById('onlineCustAddress').value = cleanAddress(c.address) || '';
+                }
+            }
+        }
+
+        function saveCustomer() {
+            let name = document.getElementById('custName').value.trim();
+            let address = cleanAddress(document.getElementById('custAddress').value);
+            let phone = document.getElementById('custPhone').value.trim();
+            let salesAmount = parseFloat(document.getElementById('custSalesAmount').value) || 0;
+            let collectAmount = parseFloat(document.getElementById('custCollectAmount').value) || 0;
+            let interest = document.getElementById('custInterest').value;
+            let reason = document.getElementById('custReason').value.trim();
+            let location = document.getElementById('custLocation').value.trim();
+            let idx = parseInt(document.getElementById('editVisitIndex').value);
+
+            if (!name) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
+
+            let custData = { name, address, phone, salesAmount, collectAmount, interest, reason, location, items: [...tempSalesItems], date: new Date().toISOString() };
+
+            if (idx >= 0) customers[idx] = custData;
+            else customers.push(custData);
+
+            saveAndSyncState();
+            resetVisitForm();
+            loadCustomers();
+            calculateReportTotals();
+            alert("✅ រក្សាទុកអតិថិជនជួបផ្ទាល់ជោគជ័យ!");
+        }
+
+        function resetVisitForm() {
+            document.getElementById('custName').value = '';
+            document.getElementById('custAddress').value = '';
+            document.getElementById('custPhone').value = '';
+            document.getElementById('custSalesAmount').value = '';
+            document.getElementById('custCollectAmount').value = '';
+            document.getElementById('custReason').value = '';
+            document.getElementById('custLocation').value = '';
+            document.getElementById('editVisitIndex').value = '-1';
+            tempSalesItems = [];
+            renderTempSalesItemsList();
+            document.getElementById('visitForm').style.display = 'none';
+        }
+
+        function loadCustomers() {
+            let container = document.getElementById('customerListContainer');
+            if (!container) return;
+            let filter = document.getElementById('searchVisitInput').value.toLowerCase();
+            
+            let filtered = customers.filter(c => c.name.toLowerCase().includes(filter) || (c.phone && c.phone.includes(filter)));
+
+            if(filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:10px;">គ្មានទិន្នន័យ</div>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach((c, idx) => {
+                let badgeClass = c.interest === 'INTERESTED' ? 'bg-interested' : (c.interest === 'NOT_INTERESTED' ? 'bg-not-interested' : 'bg-thinking');
+                let itemsStr = c.items && c.items.length > 0 ? c.items.map(i => `${i.name} ($${i.price})`).join(', ') : '';
+
+                html += `
+                    <div class="item-row-compact">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>👤 ${c.name} <span class="badge-status ${badgeClass}">${c.interest}</span></span>
+                            <span style="color:#2563eb;">$${c.salesAmount || 0}</span>
+                        </div>
+                        <div>📍 <b>អាសយដ្ឋាន:</b> ${c.address || 'N/A'}</div>
+                        <div>📞 <b>ទូរស័ព្ទ:</b> ${c.phone || 'N/A'}</div>
+                        ${itemsStr ? `<div style="color:#16a34a;">🛒 <b>ទំនិញលក់បាន:</b> ${itemsStr}</div>` : ''}
+                        ${c.reason ? `<div>📝 <b>ចំណាំ:</b> ${c.reason}</div>` : ''}
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function saveOnlineItem() {
+            let name = document.getElementById('onlineCustName').value.trim();
+            let address = cleanAddress(document.getElementById('onlineCustAddress').value);
+            let salesAmount = parseFloat(document.getElementById('onlineSalesAmount').value) || 0;
+            let collectAmount = parseFloat(document.getElementById('onlineCollectAmount').value) || 0;
+            let interest = document.getElementById('onlineInterest').value;
+            let reason = document.getElementById('onlineReason').value.trim();
+            let idx = parseInt(document.getElementById('editOnlineIndex').value);
+
+            if (!name) { alert("សូមបញ្ចូលឈ្មោះអតិថិជន!"); return; }
+
+            let itemData = { name, address, salesAmount, collectAmount, interest, reason, items: [...tempSalesItems], date: new Date().toISOString() };
+
+            if (idx >= 0) onlineItems[idx] = itemData;
+            else onlineItems.push(itemData);
+
+            saveAndSyncState();
+            resetOnlineForm();
+            loadOnlineItems();
+            calculateReportTotals();
+            alert("✅ រក្សាទុកអតិថិជនអនឡាញជោគជ័យ!");
+        }
+
+        function resetOnlineForm() {
+            document.getElementById('onlineCustName').value = '';
+            document.getElementById('onlineCustAddress').value = '';
+            document.getElementById('onlineSalesAmount').value = '';
+            document.getElementById('onlineCollectAmount').value = '';
+            document.getElementById('onlineReason').value = '';
+            document.getElementById('editOnlineIndex').value = '-1';
+            tempSalesItems = [];
+            renderTempSalesItemsList();
+            document.getElementById('onlineForm').style.display = 'none';
+        }
+
+        function loadOnlineItems() {
+            let container = document.getElementById('onlineItemListContainer');
+            if(!container) return;
+            let filter = document.getElementById('searchOnlineInput').value.toLowerCase();
+            
+            let filtered = onlineItems.filter(i => i.name.toLowerCase().includes(filter));
+
+            if(filtered.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:10px;">គ្មានទិន្នន័យ</div>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach((i, idx) => {
+                let badgeClass = i.interest === 'INTERESTED' ? 'bg-interested' : (i.interest === 'NOT_INTERESTED' ? 'bg-not-interested' : 'bg-thinking');
+                let itemsStr = i.items && i.items.length > 0 ? i.items.map(it => `${it.name} ($${it.price})`).join(', ') : '';
+
+                html += `
+                    <div class="item-row-compact">
+                        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                            <span>💻 ${i.name} <span class="badge-status ${badgeClass}">${i.interest}</span></span>
+                            <span style="color:#2563eb;">$${i.salesAmount || 0}</span>
+                        </div>
+                        <div>📍 <b>អាសយដ្ឋាន:</b> ${i.address || 'N/A'}</div>
+                        ${itemsStr ? `<div style="color:#16a34a;">🛒 <b>ទំនិញ:</b> ${itemsStr}</div>` : ''}
+                        ${i.reason ? `<div>📝 <b>ចំណាំ:</b> ${i.reason}</div>` : ''}
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function saveManualContact() {
+            let name = document.getElementById('manualContactName').value.trim();
+            let address = cleanAddress(document.getElementById('manualContactAddress').value);
+            let phone = document.getElementById('manualContactInfo').value.trim();
+            let location = document.getElementById('manualContactLocation').value.trim();
+
+            if (!name) { alert("សូមបញ្ចូលឈ្មោះទំនាក់ទំនង!"); return; }
+
+            manualContacts.push({ name, address, phone, location });
+            saveAndSyncState();
+            resetContactForm();
+            loadAllContacts();
+            alert("✅ រក្សាទុកទំនាក់ទំនងជោគជ័យ!");
+        }
+
+        function resetContactForm() {
+            document.getElementById('manualContactName').value = '';
+            document.getElementById('manualContactAddress').value = '';
+            document.getElementById('manualContactInfo').value = '';
+            document.getElementById('manualContactLocation').value = '';
+            document.getElementById('contactForm').style.display = 'none';
+        }
+
+        function loadAllContacts() {
+            let container = document.getElementById('allContactsContainer');
+            if(!container) return;
+            let filter = document.getElementById('searchContactInput').value.toLowerCase();
+            let all = getAllUniqueContacts().filter(c => c.name.toLowerCase().includes(filter) || (c.phone && c.phone.includes(filter)));
+
+            if(all.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:10px;">គ្មានទំនាក់ទំនង</div>';
+                return;
+            }
+
+            let html = '';
+            all.forEach(c => {
+                html += `
+                    <div class="item-row-compact">
+                        <div style="font-weight:bold; color:#020617;">📇 ${c.name}</div>
+                        <div>📍 <b>អាសយដ្ឋាន:</b> ${cleanAddress(c.address) || 'N/A'}</div>
+                        <div>📞 <b>ទូរស័ព្ទ:</b> ${c.phone || 'N/A'}</div>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function filterContacts() { loadAllContacts(); }
+
+        function saveAppointment() {
+            let name = document.getElementById('appCustName').value.trim();
+            let purpose = document.getElementById('appPurpose').value.trim();
+            let dateTime = document.getElementById('appDateTime').value;
+            let tone = document.getElementById('appSoundTone').value;
+
+            if(!name || !dateTime) { alert("សូមបញ្ចូលឈ្មោះ និងម៉ោងណាត់ជួប!"); return; }
+
+            appointments.push({ name, purpose, dateTime, tone });
+            saveAndSyncState();
+            document.getElementById('appointForm').style.display = 'none';
+            loadAppointments();
+            alert("✅ រក្សាទុកការណាត់ជួបជោគជ័យ!");
+        }
+
+        function loadAppointments() {
+            let container = document.getElementById('appointmentListContainer');
+            if(!container) return;
+
+            if(appointments.length === 0) {
+                container.innerHTML = '<div style="text-align:center; color:#64748b; padding:10px;">គ្មានការណាត់ជួប</div>';
+                return;
+            }
+
+            let html = '';
+            appointments.forEach(a => {
+                html += `
+                    <div class="item-row-compact">
+                        <div style="font-weight:bold; color:#020617;">📅 ${a.name}</div>
+                        <div>🎯 <b>គោលបំណង:</b> ${a.purpose || 'N/A'}</div>
+                        <div>⏰ <b>ម៉ោង:</b> ${new Date(a.dateTime).toLocaleString('km-KH')}</div>
+                    </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function loadTargetSettings() {
+            document.getElementById('inputTargetSales').value = targetSettings.targetSales || 10000;
+            document.getElementById('inputTargetCollect').value = targetSettings.targetCollect || 8000;
+        }
+
+        function saveTargetSettings() {
+            targetSettings.targetSales = parseFloat(document.getElementById('inputTargetSales').value) || 10000;
+            targetSettings.targetCollect = parseFloat(document.getElementById('inputTargetCollect').value) || 8000;
+            saveAndSyncState();
+            calculateReportTotals();
+            alert("💾 រក្សាទុក Target ជោគជ័យ!");
+        }
+
+        function calculateReportTotals() {
+            let todayStr = new Date().toISOString().slice(0, 10);
+            let currentMonthStr = new Date().toISOString().slice(0, 7);
+
+            let todaySales = 0, todayCollect = 0, monthSales = 0, monthCollect = 0;
+
+            customers.concat(onlineItems).forEach(item => {
+                let itemDate = item.date ? item.date.slice(0, 10) : '';
+                let itemMonth = item.date ? item.date.slice(0, 7) : '';
+
+                let s = item.salesAmount || 0;
+                let c = item.collectAmount || 0;
+
+                if (itemDate === todayStr) { todaySales += s; todayCollect += c; }
+                if (itemMonth === currentMonthStr) { monthSales += s; monthCollect += c; }
+            });
+
+            document.getElementById('valTodaySales').innerText = `$${todaySales.toFixed(2)}`;
+            document.getElementById('valTodayCollect').innerText = `$${todayCollect.toFixed(2)}`;
+            document.getElementById('valMonthSales').innerText = `$${monthSales.toFixed(2)}`;
+            document.getElementById('valMonthCollect').innerText = `$${monthCollect.toFixed(2)}`;
+
+            let targetS = targetSettings.targetSales || 10000;
+            let pctS = Math.min(100, Math.round((monthSales / targetS) * 100));
+
+            document.getElementById('targetProgressDisplay').innerText = `📈 សម្រេច Target លក់: ${pctS}% ($${monthSales}/$${targetS})`;
+            document.getElementById('targetProgressBar').style.width = `${pctS}%`;
+        }
+
+        function generateReport() {
+            calculateReportTotals();
+            let summary = `📊 **របាយការណ៍លក់ប្រចាំថ្ងៃ (${new Date().toLocaleDateString('km-KH')})**\n\n`;
+            summary += `👤 **បុគ្គលិក:** ${localStorage.getItem('sales_user_display_name') || 'N/A'}\n`;
+            summary += `💰 **លក់ថ្ងៃនេះ:** ${document.getElementById('valTodaySales').innerText}\n`;
+            summary += `💵 **ប្រមូលលុយថ្ងៃនេះ:** ${document.getElementById('valTodayCollect').innerText}\n\n`;
+            summary += `📈 **លក់ប្រចាំខែ:** ${document.getElementById('valMonthSales').innerText}\n`;
+            summary += `🎯 **Target លក់:** $${targetSettings.targetSales || 10000}\n`;
+
+            document.getElementById('reportSummaryBox').innerText = summary;
+        }
+
+        function shareReportTextToTelegram() {
+            let text = document.getElementById('reportSummaryBox').innerText;
+            let url = `https://t.me/share/url?url=${encodeURIComponent('https://t.me')}&text=${encodeURIComponent(text)}`;
+            if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+            else window.open(url, '_blank');
+        }
+
+        function exportContactsToExcelCSV() {
+            let contacts = getAllUniqueContacts();
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "ឈ្មោះ,អាសយដ្ឋាន,លេខទូរស័ព្ទ,ទីតាំងGPS\n";
+
+            contacts.forEach(c => {
+                csvContent += `"${c.name}","${cleanAddress(c.address)}","${c.phone || ''}","${c.location || ''}"\n`;
+            });
+
+            let encodedUri = encodeURI(csvContent);
+            let link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Contacts_Export_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // APP INITIALIZATION
+        window.onload = function() {
+            checkFirstTimeUser();
+            updateProfileDisplay();
+            adjustUIByRole();
+            initMissionTracking();
+            autoPullFromTelegramCloud();
+        };
+    </script>
+</body>
+</html>
