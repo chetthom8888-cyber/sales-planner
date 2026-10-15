@@ -204,7 +204,7 @@
 <body>
 
     <!-- ONBOARDING MODAL -->
-    <div id="onboardingModal" class="modal-onboarding">
+    <div id="onboardingModal" class="modal-onboarding" style="display:none;">
         <div class="onboarding-card">
             <h2 style="margin-top:0; color:#020617; font-size:16px;">🔐 ស្វាគមន៍មកកាន់ Sales Planner Pro</h2>
             
@@ -747,19 +747,35 @@
             calculateReportTotals();
         }
 
+        // --- មុខងារពិនិត្យថ្ងៃផុតកំណត់ (បង្ហាញ QR Code របស់ ABA នៅពេលហួស ៣០ថ្ងៃ) ---
         function checkTrialStatus() {
             let firstOpen = localStorage.getItem('app_first_open_date');
             let isPaid = localStorage.getItem('app_is_paid');
             if (isPaid === 'true') return;
-            if (!firstOpen) { firstOpen = new Date().toISOString(); localStorage.setItem('app_first_open_date', firstOpen); }
+            if (!firstOpen) { 
+                firstOpen = new Date().toISOString(); 
+                localStorage.setItem('app_first_open_date', firstOpen); 
+            }
             let diffDays = Math.ceil((new Date() - new Date(firstOpen)) / (1000 * 60 * 60 * 24));
+            
             if (diffDays > 30) {
                 document.body.innerHTML = `
-                    <div style="max-width:450px; margin:30px auto; padding:20px; background:white; border-radius:16px; border:2px solid #020617; text-align:center; font-family:'Battambang', sans-serif;">
-                        <h2 style="color:#dc2626;">⚠️ ផុតកំណត់ Free ៣០ ថ្ងៃ!</h2>
-                        <p style="font-size:13px;">សូមបន្តសុពលភាព ($1.99/ខែ) ដើម្បីបន្តប្រើប្រាស់</p>
-                        <div style="font-weight:bold; margin-top:10px; font-size:14px; color:#0284c7;">ទំនាក់ទំនង៖ មុំ សាមាន (0964444679)</div>
-                        <a href="https://t.me/SameanMom168" target="_blank" style="background:#0284c7; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; display:block; margin-top:15px;">💬 ទាក់ទងទូទាត់តាម Telegram</a>
+                    <div style="max-width:400px; margin:30px auto; padding:20px; background:white; border-radius:16px; border:2px solid #dc2626; text-align:center; font-family:'Battambang', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                        <h2 style="color:#dc2626; margin-top:0; font-size:16px;">⚠️ គណនីផុតកំណត់សមាជិកភាព ៣០ ថ្ងៃ!</h2>
+                        <p style="font-size:12px; color:#475569; line-height:1.5;">
+                            សូមស្កេន QR Code ខាងក្រោមដើម្បីបន្តសមាជិកភាព និងប្រើប្រាស់កម្មវិធីបន្តទៀត៖
+                        </p>
+                        
+                        <!-- ABA QR PAY BOX -->
+                        <div style="background:#0b1329; padding:15px; border-radius:12px; margin:12px 0;">
+                            <div style="color:#38bdf8; font-weight:bold; font-size:13px;">ABA PAY</div>
+                            <img src="image_9f229f.jpg" alt="ABA QR" style="width:150px; height:150px; object-fit:contain; margin:8px 0; background:white; padding:5px; border-radius:6px;" />
+                            <div style="color:white; font-weight:bold; font-size:12px;">MOM SAMEAN</div>
+                            <div style="color:#94a3b8; font-size:10px;">MID: 1260712225222434</div>
+                        </div>
+
+                        <p style="font-size:11px; color:#166534; margin-bottom:8px;">បន្ទាប់ពីបង់ប្រាក់រួច សូមផ្ញើ Slip មកកាន់ Telegram:</p>
+                        <a href="https://t.me/SameanMom168" target="_blank" style="display:block; background:#0284c7; color:white; padding:10px; text-decoration:none; border-radius:8px; font-weight:bold; font-size:12px;">💬 @SameanMom168</a>
                     </div>`;
             }
         }
@@ -873,7 +889,7 @@
                 customers = []; onlineItems = []; manualContacts = []; appointments = [];
                 saveAndSyncState();
                 refreshCurrentTabUI();
-                alert("🧹 ជម្រះ Storage បានជោគជ័យ!");
+                alert("🧹 ជម្រះ Storage ได้ជោគជ័យ!");
             }
         }
 
@@ -1089,7 +1105,7 @@
                     let lat = position.coords.latitude, lon = position.coords.longitude;
                     document.getElementById(elementId).value = `https://maps.google.com/?q=${lat},${lon}`;
                     if (addressInputId) fetchAddressFromLatLng(lat, lon, addressInputId);
-                    alert("🎯 ចាប់យកទីតាំង GPS បានជោគជ័យ!");
+                    alert("🎯 ចាប់យកទីតាំង GPS ได้ជោគជ័យ!");
                 });
             }
         }
@@ -1112,7 +1128,7 @@
         function copyCurrentAddress() {
             if (currentRawAddress) {
                 navigator.clipboard.writeText(currentRawAddress);
-                alert("📋 ចម្លងអាសយដ្ឋានពេញបានជោគជ័យ!");
+                alert("📋 ចម្លងអាសយដ្ឋានពេញได้ជោគជ័យ!");
             }
         }
 
@@ -1183,7 +1199,7 @@
             document.getElementById('btnEndMission').style.display = 'none';
             document.getElementById('btnShareMissionReport').style.display = 'block';
             document.getElementById('btnShareMonthlyReport').style.display = 'block';
-            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មបានបញ្ចប់!";
+            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មໄດ້បញ្ចប់!";
             renderHistoricalRoutes();
             updateLiveMissionMetrics();
         }
@@ -1577,7 +1593,7 @@
             populateQuickDebtorDropdown();
             renderDebtorsTable();
             calculateReportTotals();
-            alert("✅ រក្សាទុកបានជោគជ័យ!");
+            alert("✅ រក្សាទុកได้ជោគជ័យ!");
         }
 
         function editCustomer(index) {
@@ -1832,7 +1848,6 @@
         }
 
         function getFormattedReportText() {
-            let today = new Date().toLocaleDateString('km-KH');
             let totalContacts = getAllUniqueContacts().length;
 
             let interestedCount = 0, notInterestedCount = 0, thinkingCount = 0;
@@ -1918,7 +1933,7 @@
             updateProfileDisplay();
             adjustUIByRole();
             checkFirstTimeUser();
-            checkTrialStatus();
+            checkTrialStatus(); // ពិនិត្យថ្ងៃផុតកំណត់ (បង្ហាញ QR Code របស់ ABA ដោយស្វ័យប្រវត្តិបើហួស ៣០ថ្ងៃ)
             autoPullFromTelegramCloud();
             loadAllContacts();
             initMissionMap();
