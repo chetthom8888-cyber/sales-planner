@@ -230,6 +230,28 @@
         </div>
     </div>
 
+    <!-- ADMIN UNLOCK MODAL (សម្រាប់ Admin ចុចដោះសោរឱ្យអតិថិជន) -->
+    <div id="adminUnlockModal" class="modal-onboarding" style="display:none;">
+        <div class="onboarding-card" style="text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="color:#0369a1; margin:0;">🛠️ Admin Control Panel</h3>
+                <button class="btn btn-red btn-sm" onclick="document.getElementById('adminUnlockModal').style.display='none'">✖ បិទ</button>
+            </div>
+            <p style="font-size:11.5px; color:#475569;">ស្វាគមន៍ Admin `@SameanMom168`! អ្នកអាចបង្កើតកូដដោះសោរ ឬដោះសោរ App នេះដោយផ្ទាល់បាន៖</p>
+            
+            <div class="form-group">
+                <label>🔑 បង្កើតកូដដោះសោរថ្មីសម្រាប់ខែនេះ៖</label>
+                <button class="btn btn-blue" style="width:100%; padding:10px; margin-top:4px;" onclick="adminGenerateDynamicKey()">⚡ បង្កើតកូដដោះសោរថ្មី</button>
+                <input type="text" id="adminGeneratedKeyDisplay" readonly style="margin-top:8px; text-align:center; font-weight:bold; background:#f1f5f9 !important;" placeholder="កូដនឹងបង្ហាញទីនេះ...">
+            </div>
+
+            <div style="border-top:1px solid #cbd5e1; margin:12px 0; padding-top:10px;">
+                <label style="color:#166534;">🔓 ឬដោះសោរទូរស័ព្ទនេះភ្លាមៗ (Bypass):</label>
+                <button class="btn" style="width:100%; padding:10px; margin-top:4px; background:#16a34a;" onclick="adminDirectUnlockApp()">✅ ចុចដោះសោរ App នេះឥឡូវនេះ</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MAIN HEADER -->
     <div class="top-banner">
         <span>📋 Sales Planner Pro</span>
@@ -662,6 +684,16 @@
             } catch (e) {}
         }
 
+        // កំណត់ Telegram Username របស់អ្នកជា Admin តែមួយគត់ (@SameanMom168)
+        const ADMIN_USERNAME = "SameanMom168";
+
+        function isAdminUser() {
+            if (tgUser && tgUser.username) {
+                return tgUser.username.toLowerCase() === ADMIN_USERNAME.toLowerCase();
+            }
+            return false; // ប្រសិនបើបើកក្រៅ Telegram ឬមិនមែន username នោះ គឺមិនមែន Admin ទេ
+        }
+
         function debounce(func, wait = 100) {
             let timeout;
             return function(...args) {
@@ -747,7 +779,7 @@
             calculateReportTotals();
         }
 
-        // --- មុខងារពិនិត្យថ្ងៃផុតកំណត់ (បង្ហាញ QR Code របស់ ABA នៅពេលហួស ៣០ថ្ងៃ) ---
+        // --- មុខងារពិនិត្យថ្ងៃផុតកំណត់ & ផ្ទាំង Lock Screen ដែលมีប៊ូតុង Admin Panel ---
         function checkTrialStatus() {
             let firstOpen = localStorage.getItem('app_first_open_date');
             let isPaid = localStorage.getItem('app_is_paid');
@@ -760,24 +792,47 @@
             
             if (diffDays > 30) {
                 document.body.innerHTML = `
-                    <div style="max-width:400px; margin:30px auto; padding:20px; background:white; border-radius:16px; border:2px solid #dc2626; text-align:center; font-family:'Battambang', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                        <h2 style="color:#dc2626; margin-top:0; font-size:16px;">⚠️ គណនីផុតកំណត់សមាជិកភាព ៣០ ថ្ងៃ!</h2>
-                        <p style="font-size:12px; color:#475569; line-height:1.5;">
-                            សូមស្កេន QR Code ខាងក្រោមដើម្បីបន្តសមាជិកភាព និងប្រើប្រាស់កម្មវិធីបន្តទៀត៖
+                    <div style="max-width:400px; margin:20px auto; padding:20px; background:white; border-radius:16px; border:2px solid #dc2626; text-align:center; font-family:'Battambang', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                        <div style="display:flex; justify-content:flex-end;">
+                            <button class="btn btn-blue btn-sm" onclick="openAdminPanelFromLock()">🛠️ Admin Panel</button>
+                        </div>
+                        <h2 style="color:#dc2626; margin-top:5px; font-size:15px;">⚠️ គណនីផុតកំណត់សមាជិកភាព ៣០ ថ្ងៃ!</h2>
+                        <p style="font-size:11.5px; color:#475569; line-height:1.5;">
+                            សូមស្កេន QR Code ខាងក្រោមដើម្បីបន្តសមាជិកភាព៖
                         </p>
                         
                         <!-- ABA QR PAY BOX -->
-                        <div style="background:#0b1329; padding:15px; border-radius:12px; margin:12px 0;">
-                            <div style="color:#38bdf8; font-weight:bold; font-size:13px;">ABA PAY</div>
-                            <img src="image_9f229f.jpg" alt="ABA QR" style="width:150px; height:150px; object-fit:contain; margin:8px 0; background:white; padding:5px; border-radius:6px;" />
+                        <div style="background:#0b1329; padding:12px; border-radius:12px; margin:10px 0;">
+                            <div style="color:#38bdf8; font-weight:bold; font-size:12px;">ABA PAY</div>
+                            <img src="image_9f229f.jpg" alt="ABA QR" style="width:140px; height:140px; object-fit:contain; margin:6px 0; background:white; padding:4px; border-radius:6px;" />
                             <div style="color:white; font-weight:bold; font-size:12px;">MOM SAMEAN</div>
                             <div style="color:#94a3b8; font-size:10px;">MID: 1260712225222434</div>
                         </div>
 
-                        <p style="font-size:11px; color:#166534; margin-bottom:8px;">បន្ទាប់ពីបង់ប្រាក់រួច សូមផ្ញើ Slip មកកាន់ Telegram:</p>
-                        <a href="https://t.me/SameanMom168" target="_blank" style="display:block; background:#0284c7; color:white; padding:10px; text-decoration:none; border-radius:8px; font-weight:bold; font-size:12px;">💬 @SameanMom168</a>
+                        <p style="font-size:11px; color:#166534; margin-bottom:6px;">បន្ទាប់ពីបង់ប្រាក់រួច សូមផ្ញើ Slip មកកាន់ Telegram:</p>
+                        <a href="https://t.me/SameanMom168" target="_blank" style="display:block; background:#0284c7; color:white; padding:8px; text-decoration:none; border-radius:8px; font-weight:bold; font-size:11.5px; margin-bottom:12px;">💬 @SameanMom168</a>
                     </div>`;
             }
+        }
+
+        function openAdminPanelFromLock() {
+            if (isAdminUser()) {
+                document.getElementById('adminUnlockModal').style.display = 'flex';
+            } else {
+                alert("⛔ បដិសេធ! មានតែ Admin (@SameanMom168) គត់ទើបអាចចូលប្រើមុខងារនេះបាន។");
+            }
+        }
+
+        function adminGenerateDynamicKey() {
+            let randomCode = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('adminGeneratedKeyDisplay').value = `KEY-${randomCode}`;
+            alert(`⚡ កូដដោះសោរសម្រាប់ខែនេះគឺ: KEY-${randomCode}`);
+        }
+
+        function adminDirectUnlockApp() {
+            localStorage.setItem('app_is_paid', 'true');
+            alert("🎉 Admin បានដោះសោរ App នេះជោគជ័យ!");
+            location.reload();
         }
 
         let userId = tgUser ? tgUser.id.toString() : (localStorage.getItem('sales_user_uuid') || ('USER_' + Math.random().toString(36).substr(2, 9).toUpperCase()));
@@ -1199,7 +1254,7 @@
             document.getElementById('btnEndMission').style.display = 'none';
             document.getElementById('btnShareMissionReport').style.display = 'block';
             document.getElementById('btnShareMonthlyReport').style.display = 'block';
-            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មໄດ້បញ្ចប់!";
+            document.getElementById('missionStatusBox').innerText = "🔴 បេសកកម្មបានបញ្ចប់!";
             renderHistoricalRoutes();
             updateLiveMissionMetrics();
         }
@@ -1292,7 +1347,7 @@
             loadCustomers();
             renderDebtorsTable();
             calculateReportTotals();
-            alert("✅ រក្សាទុកអតិថិជនជំពាក់បានជោគជ័យ!");
+            alert("✅ រក្សាទុកអតិថិជនជំពាក់ได้ជោគជ័យ!");
         }
 
         function renderDebtorsTable() {
@@ -1374,7 +1429,7 @@
             safeLocalStorageSet('sales_targets', JSON.stringify(targetSettings));
             safeLocalStorageSet('sales_targets_permanent', JSON.stringify(targetSettings));
             saveAndSyncState();
-            alert("✅ រក្សាទុក Target បានជោគជ័យ!");
+            alert("✅ រក្សាទុក Target ได้ជោគជ័យ!");
             calculateReportTotals();
         }
 
@@ -1427,7 +1482,7 @@
             link.href = URL.createObjectURL(blob);
             link.download = `Contacts_${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
-            alert("✅ ទាញយក Excel បានជោគជ័យ!");
+            alert("✅ ទាញយក Excel ได้ជោគជ័យ!");
         }
 
         function syncDataToCloud() {
@@ -1593,7 +1648,7 @@
             populateQuickDebtorDropdown();
             renderDebtorsTable();
             calculateReportTotals();
-            alert("✅ រក្សាទុកได้ជោគជ័យ!");
+            alert("✅ រក្សាទុកបានជោគជ័យ!");
         }
 
         function editCustomer(index) {
@@ -1710,7 +1765,7 @@
             loadAllContacts();
             renderDebtorsTable();
             calculateReportTotals();
-            alert("✅ រក្សាទុកបានជោគជ័យ!");
+            alert("✅ រក្សាទុកได้ជោគជ័យ!");
         }
 
         function editOnlineItem(index) {
@@ -1933,7 +1988,7 @@
             updateProfileDisplay();
             adjustUIByRole();
             checkFirstTimeUser();
-            checkTrialStatus(); // ពិនិត្យថ្ងៃផុតកំណត់ (បង្ហាញ QR Code របស់ ABA ដោយស្វ័យប្រវត្តិបើហួស ៣០ថ្ងៃ)
+            checkTrialStatus(); // ពិនិត្យថ្ងៃផុតកំណត់ & បង្ហាញប៊ូតុង Admin Panel ស្វ័យប្រវត្តិ
             autoPullFromTelegramCloud();
             loadAllContacts();
             initMissionMap();
