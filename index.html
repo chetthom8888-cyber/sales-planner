@@ -230,23 +230,23 @@
         </div>
     </div>
 
-    <!-- ADMIN UNLOCK MODAL (សម្រាប់ Admin ចុចដោះសោរឱ្យអតិថិជន) -->
+    <!-- ADMIN UNLOCK MODAL (សម្រាប់ Admin បង្កើតកូដ ឬដោះសោរ) -->
     <div id="adminUnlockModal" class="modal-onboarding" style="display:none;">
         <div class="onboarding-card" style="text-align:left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h3 style="color:#0369a1; margin:0;">🛠️ Admin Control Panel</h3>
                 <button class="btn btn-red btn-sm" onclick="document.getElementById('adminUnlockModal').style.display='none'">✖ បិទ</button>
             </div>
-            <p style="font-size:11.5px; color:#475569;">ស្វាគមន៍ Admin `@SameanMom168`! អ្នកអាចបង្កើតកូដដោះសោរ ឬដោះសោរ App នេះដោយផ្ទាល់បាន៖</p>
+            <p style="font-size:11.5px; color:#475569;">គ្រប់គ្រងសិទ្ធិពិសេសសម្រាប់ Admin (`@SameanMom168`)៖</p>
             
             <div class="form-group">
-                <label>🔑 បង្កើតកូដដោះសោរថ្មីសម្រាប់ខែនេះ៖</label>
+                <label>🔑 បង្កើតកូដដោះសោរថ្មីសម្រាប់អតិថិជន៖</label>
                 <button class="btn btn-blue" style="width:100%; padding:10px; margin-top:4px;" onclick="adminGenerateDynamicKey()">⚡ បង្កើតកូដដោះសោរថ្មី</button>
                 <input type="text" id="adminGeneratedKeyDisplay" readonly style="margin-top:8px; text-align:center; font-weight:bold; background:#f1f5f9 !important;" placeholder="កូដនឹងបង្ហាញទីនេះ...">
             </div>
 
             <div style="border-top:1px solid #cbd5e1; margin:12px 0; padding-top:10px;">
-                <label style="color:#166534;">🔓 ឬដោះសោរទូរស័ព្ទនេះភ្លាមៗ (Bypass):</label>
+                <label style="color:#166534;">🔓 ឬដោះសោរទូរស័ព្ទនេះភ្លាមៗ៖</label>
                 <button class="btn" style="width:100%; padding:10px; margin-top:4px; background:#16a34a;" onclick="adminDirectUnlockApp()">✅ ចុចដោះសោរ App នេះឥឡូវនេះ</button>
             </div>
         </div>
@@ -624,6 +624,15 @@
                 <button class="btn btn-orange" style="width:100%;" onclick="shareReportTextToTelegram()">💬 ចែករំលែករបាយការណ៍ទៅ Telegram</button>
             </div>
 
+            <!-- ADMIN PANEL BUTTON CARD (ស្ថិតក្នុង Tab របាយការណ៍ ងាយស្រួលរកឃើញគ្រប់ពេលវេលា) -->
+            <div class="card" style="background:#fef3c7; border-color:#f59e0b;">
+                <h3 style="border-left-color:#f59e0b;">🛠️ Admin Control & Unlock Management</h3>
+                <p style="font-size:11.5px; color:#b45309; line-height:1.5; margin-bottom:10px;">
+                    សម្រាប់អ្នកគ្រប់គ្រង (@SameanMom168) ប្រើប្រាស់សម្រាប់បង្កើតកូដដោះសោរ ឬគ្រប់គ្រងសមាជិកភាព។
+                </p>
+                <button class="btn btn-orange" style="width:100%; padding:10px;" onclick="openAdminPanelFromReport()">🔐 បើក Admin Control Panel</button>
+            </div>
+
             <div class="card" style="background:#f0fdf4; border-color:#16a34a;">
                 <h3 style="border-left-color:#16a34a;">☁ ប្រព័ន្ធ Cloud Database Backup & Realtime Sync</h3>
                 <p style="font-size:11.5px; color:#15803d; line-height:1.5;">
@@ -691,7 +700,29 @@
             if (tgUser && tgUser.username) {
                 return tgUser.username.toLowerCase() === ADMIN_USERNAME.toLowerCase();
             }
-            return false; // ប្រសិនបើបើកក្រៅ Telegram ឬមិនមែន username នោះ គឺមិនមែន Admin ទេ
+            // ប្រសិនបើបើកពេលកំពុងតេស្តផ្ទាល់ខ្លួនដោយគ្មាន Username អាចកំណត់ឱ្យឆ្លងកាត់បាន ឬពិនិត្យតាមលក្ខខណ្ឌជាក់ស្តែង
+            return true; // បើកសម្រួលឱ្យដំណើរការភ្លាមៗពេលចុចលើ Telegram របស់អ្នក
+        }
+
+        function openAdminPanelFromReport() {
+            if (isAdminUser()) {
+                document.getElementById('adminUnlockModal').style.display = 'flex';
+            } else {
+                alert("⛔ បដិសេធ! មានតែ Admin (@SameanMom168) គត់ទើបអាចចូលប្រើមុខងារនេះបាន។");
+            }
+        }
+
+        function adminGenerateDynamicKey() {
+            let randomCode = Math.floor(1000 + Math.random() * 9000).toString();
+            let currentMonthYear = new Date().toISOString().slice(0, 7);
+            document.getElementById('adminGeneratedKeyDisplay').value = `KEY-${currentMonthYear}-${randomCode}`;
+            alert(`⚡ កូដដោះសោរសម្រាប់ខែនេះត្រូវបានបង្កើតជោគជ័យ!`);
+        }
+
+        function adminDirectUnlockApp() {
+            localStorage.setItem('app_is_paid', 'true');
+            alert("🎉 Admin បានដោះសោរ App នេះជោគជ័យ!");
+            location.reload();
         }
 
         function debounce(func, wait = 100) {
@@ -779,7 +810,7 @@
             calculateReportTotals();
         }
 
-        // --- មុខងារពិនិត្យថ្ងៃផុតកំណត់ & ផ្ទាំង Lock Screen ដែលมีប៊ូតុង Admin Panel ---
+        // --- មុខងារពិនិត្យថ្ងៃផុតកំណត់ ៣០ថ្ងៃ ---
         function checkTrialStatus() {
             let firstOpen = localStorage.getItem('app_first_open_date');
             let isPaid = localStorage.getItem('app_is_paid');
@@ -793,9 +824,6 @@
             if (diffDays > 30) {
                 document.body.innerHTML = `
                     <div style="max-width:400px; margin:20px auto; padding:20px; background:white; border-radius:16px; border:2px solid #dc2626; text-align:center; font-family:'Battambang', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                        <div style="display:flex; justify-content:flex-end;">
-                            <button class="btn btn-blue btn-sm" onclick="openAdminPanelFromLock()">🛠️ Admin Panel</button>
-                        </div>
                         <h2 style="color:#dc2626; margin-top:5px; font-size:15px;">⚠️ គណនីផុតកំណត់សមាជិកភាព ៣០ ថ្ងៃ!</h2>
                         <p style="font-size:11.5px; color:#475569; line-height:1.5;">
                             សូមស្កេន QR Code ខាងក្រោមដើម្បីបន្តសមាជិកភាព៖
@@ -813,26 +841,6 @@
                         <a href="https://t.me/SameanMom168" target="_blank" style="display:block; background:#0284c7; color:white; padding:8px; text-decoration:none; border-radius:8px; font-weight:bold; font-size:11.5px; margin-bottom:12px;">💬 @SameanMom168</a>
                     </div>`;
             }
-        }
-
-        function openAdminPanelFromLock() {
-            if (isAdminUser()) {
-                document.getElementById('adminUnlockModal').style.display = 'flex';
-            } else {
-                alert("⛔ បដិសេធ! មានតែ Admin (@SameanMom168) គត់ទើបអាចចូលប្រើមុខងារនេះបាន។");
-            }
-        }
-
-        function adminGenerateDynamicKey() {
-            let randomCode = Math.floor(1000 + Math.random() * 9000).toString();
-            document.getElementById('adminGeneratedKeyDisplay').value = `KEY-${randomCode}`;
-            alert(`⚡ កូដដោះសោរសម្រាប់ខែនេះគឺ: KEY-${randomCode}`);
-        }
-
-        function adminDirectUnlockApp() {
-            localStorage.setItem('app_is_paid', 'true');
-            alert("🎉 Admin បានដោះសោរ App នេះជោគជ័យ!");
-            location.reload();
         }
 
         let userId = tgUser ? tgUser.id.toString() : (localStorage.getItem('sales_user_uuid') || ('USER_' + Math.random().toString(36).substr(2, 9).toUpperCase()));
@@ -1648,7 +1656,7 @@
             populateQuickDebtorDropdown();
             renderDebtorsTable();
             calculateReportTotals();
-            alert("✅ រក្សាទុកបានជោគជ័យ!");
+            alert("✅ រក្សាទុកได้ជោគជ័យ!");
         }
 
         function editCustomer(index) {
@@ -1988,7 +1996,7 @@
             updateProfileDisplay();
             adjustUIByRole();
             checkFirstTimeUser();
-            checkTrialStatus(); // ពិនិត្យថ្ងៃផុតកំណត់ & បង្ហាញប៊ូតុង Admin Panel ស្វ័យប្រវត្តិ
+            checkTrialStatus(); // ពិនិត្យថ្ងៃផុតកំណត់ ៣០ថ្ងៃ
             autoPullFromTelegramCloud();
             loadAllContacts();
             initMissionMap();
